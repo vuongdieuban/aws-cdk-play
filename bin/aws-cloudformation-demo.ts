@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import * as cdk from '@aws-cdk/core';
-import { AwsCloudformationDemoStack } from '../lib/aws-cloudformation-demo-stack';
+import { LambdaHandlerStack } from '../lib/lambda-handler-stack';
 
 const app = new cdk.App();
-new AwsCloudformationDemoStack(app, 'AwsCloudformationDemoStack');
+new LambdaHandlerStack(app, 'LambdaHandlerStack');

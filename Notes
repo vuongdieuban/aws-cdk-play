@@ -1,0 +1,3 @@
+When use assets (local js files or docker file), we must run cdk bootstrap first, then cdk deploy
+
+cdk bootstrap read our aws config and credentials
