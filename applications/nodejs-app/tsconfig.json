@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "es2018",
+    "module": "commonjs",
+    "lib": [
+      "es2020",
+      "dom"
+    ],
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "strict": true,
+    // this one allow us to declare variable in class without initialization, 
+    // otherwise typescript will force all variable in class to be initialized when declared
+    "strictPropertyInitialization": false 
+  },
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}
