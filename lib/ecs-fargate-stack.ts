@@ -20,6 +20,8 @@ export class EcsFargateStack extends Stack {
 
     // Takes a very long time to deploy  because it has to create and boot up the vpc, if vpc exist might low down the time
     // Since we didn't specify the vpc, it always create one for us.
+    // We can pass VPC as variable, or use ARN look up for existed one (ARN = Amazon resource number, uniquely identify a resource)
+    // Becareful with ARN because if we destroy it or ARN changes, this code would break because of non-existed resources
     const fargateService = new ApplicationLoadBalancedFargateService(this, 'EcsFargateService', {
       cluster,
       taskDefinition,
