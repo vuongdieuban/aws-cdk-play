@@ -5,7 +5,7 @@ import * as appmesh from '@aws-cdk/aws-appmesh';
 import { DnsRecordType } from '@aws-cdk/aws-servicediscovery';
 import { Protocol, SecurityGroup } from '@aws-cdk/aws-ec2';
 
-export class Ec2AppMeshService extends cdk.Construct {
+export class EcsFargateAppMeshService extends cdk.Construct {
   public service: ecs.FargateService;
   public portNumber: number;
   public serviceName: string;
@@ -112,7 +112,7 @@ export class Ec2AppMeshService extends cdk.Construct {
   // can talk to each other. Also adjusts the virtual node for this service
   // so that its Envoy intercepts traffic that can be handled by the other
   // service's virtual service.
-  connectToMeshService(appMeshService: Ec2AppMeshService) {
+  connectToMeshService(appMeshService: EcsFargateAppMeshService) {
     var trafficPort = new ec2.Port({
       stringRepresentation: 'port',
       protocol: Protocol.TCP,

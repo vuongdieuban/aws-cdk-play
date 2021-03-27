@@ -5,7 +5,7 @@ import * as appmesh from '@aws-cdk/aws-appmesh';
 import * as elbv2 from '@aws-cdk/aws-elasticloadbalancingv2';
 import * as servicediscovery from '@aws-cdk/aws-servicediscovery';
 import { SecurityGroup } from '@aws-cdk/aws-ec2';
-import { Ec2AppMeshService } from './constructs/ec2-appmesh-service.construct';
+import { EcsFargateAppMeshService } from './constructs/ecs-fargate-appmesh-service.construct';
 export class GreetingStack extends cdk.Stack {
   public externalDNS: cdk.CfnOutput;
   constructor(parent: any, id: string, props?: any) {
@@ -53,7 +53,7 @@ export class GreetingStack extends cdk.Stack {
       retries: 3,
     };
 
-    const nameService = new Ec2AppMeshService(this, 'name', {
+    const nameService = new EcsFargateAppMeshService(this, 'name', {
       cluster: cluster,
       mesh: mesh,
       portNumber: 3000,
@@ -71,7 +71,7 @@ export class GreetingStack extends cdk.Stack {
       },
     });
 
-    const greetingService = new Ec2AppMeshService(this, 'greeting', {
+    const greetingService = new EcsFargateAppMeshService(this, 'greeting', {
       cluster: cluster,
       mesh: mesh,
       portNumber: 3000,
@@ -89,7 +89,7 @@ export class GreetingStack extends cdk.Stack {
       },
     });
 
-    const greeterService = new Ec2AppMeshService(this, 'greeter', {
+    const greeterService = new EcsFargateAppMeshService(this, 'greeter', {
       cluster: cluster,
       mesh: mesh,
       portNumber: 3000,
