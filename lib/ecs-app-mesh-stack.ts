@@ -21,7 +21,6 @@ export class GreetingStack extends cdk.Stack {
 
     // TODO: This allow 80 and 3000 to all service, maybe only need 3000, doesn't need 80.
     // 80 port is for the public listener
-    securityGroup.addIngressRule(ec2.Peer.ipv4('0.0.0.0/0'), ec2.Port.tcp(80), 'SSh from anywhere');
     securityGroup.addIngressRule(ec2.Peer.ipv4('0.0.0.0/0'), ec2.Port.tcp(3000), 'App Port');
 
     // Create an ECS cluster
