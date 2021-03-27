@@ -1,6 +1,9 @@
 import { App, Stack, StackProps } from '@aws-cdk/core';
 import { AssetImage, Cluster as EcsCluster, FargateTaskDefinition } from '@aws-cdk/aws-ecs';
-import { ApplicationLoadBalancedFargateService } from '@aws-cdk/aws-ecs-patterns';
+import {
+  ApplicationLoadBalancedFargateService,
+  NetworkLoadBalancedFargateService,
+} from '@aws-cdk/aws-ecs-patterns';
 
 export class EcsFargateStack extends Stack {
   constructor(scope: App, id: string, props?: StackProps) {
