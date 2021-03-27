@@ -116,7 +116,7 @@ export class GreetingStack extends cdk.Stack {
     // Last but not least setup an internet facing load balancer for
     // exposing the public facing greeter service to the public.
     const externalLB = new elbv2.NetworkLoadBalancer(this, 'external', {
-      vpc: vpc,
+      vpc,
       internetFacing: true, // TODO: try make this false and create VpcLink from ApiGateway to access it
     });
 

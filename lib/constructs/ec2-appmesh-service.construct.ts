@@ -6,7 +6,7 @@ import { DnsRecordType } from '@aws-cdk/aws-servicediscovery';
 import { Protocol, SecurityGroup } from '@aws-cdk/aws-ec2';
 
 export class Ec2AppMeshService extends cdk.Construct {
-  public service: ecs.Ec2Service;
+  public service: ecs.FargateService;
   public portNumber: number;
   public serviceName: string;
   public taskDefinition: ecs.Ec2TaskDefinition;
@@ -26,8 +26,8 @@ export class Ec2AppMeshService extends cdk.Construct {
     this.serviceName = id;
     this.portNumber = props.portNumber;
 
-    this.taskDefinition = new ecs.Ec2TaskDefinition(this, `${this.serviceName}-task-definition`, {
-      networkMode: ecs.NetworkMode.AWS_VPC,
+    this.taskDefinition = new ecs.FargateTaskDefinition(this, `${this.serviceName}-task-definition`, {
+      // networkMode: ecs.NetworkMode.AWS_VPC,
       proxyConfiguration: new ecs.AppMeshProxyConfiguration({
         containerName: 'envoy',
         properties: {
@@ -75,7 +75,7 @@ export class Ec2AppMeshService extends cdk.Construct {
       }),
     });
 
-    this.service = new ecs.Ec2Service(this, `${this.serviceName}-service`, {
+    this.service = new ecs.FargateService(this, `${this.serviceName}-service`, {
       cluster: cluster,
       desiredCount: 2,
       taskDefinition: this.taskDefinition,
