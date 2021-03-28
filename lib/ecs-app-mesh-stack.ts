@@ -38,9 +38,9 @@ export class GreetingStack extends cdk.Stack {
       meshName: 'greeting-app-mesh',
     });
 
-    // Add capacity to it
+    // Add capacity/auto-scaling to it
     cluster.addCapacity('greeter-capacity', {
-      instanceType: ec2.InstanceType.of(ec2.InstanceClass.STANDARD3, ec2.InstanceSize.MICRO),
+      instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
       minCapacity: 1,
       maxCapacity: 2,
     });
