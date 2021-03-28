@@ -4,6 +4,7 @@ import * as ec2 from '@aws-cdk/aws-ec2';
 import * as appmesh from '@aws-cdk/aws-appmesh';
 import { DnsRecordType } from '@aws-cdk/aws-servicediscovery';
 import { Protocol, SecurityGroup } from '@aws-cdk/aws-ec2';
+import { Backend } from '@aws-cdk/aws-appmesh';
 
 export class EcsFargateAppMeshService extends cdk.Construct {
   public service: ecs.FargateService;
@@ -130,6 +131,6 @@ export class EcsFargateAppMeshService extends cdk.Construct {
 
     // Now adjust this app mesh service's virtual node to add a backend
     // that is the other service's virtual service
-    this.virtualNode.addBackend(appMeshService.virtualService);
+    this.virtualNode.addBackend(Backend.virtualService(appMeshService.virtualService));
   }
 }
