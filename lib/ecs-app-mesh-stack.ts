@@ -6,6 +6,7 @@ import * as elbv2 from '@aws-cdk/aws-elasticloadbalancingv2';
 import * as servicediscovery from '@aws-cdk/aws-servicediscovery';
 import { SecurityGroup } from '@aws-cdk/aws-ec2';
 import { EcsFargateAppMeshService } from './constructs/ecs-fargate-appmesh-service.construct';
+
 export class GreetingStack extends cdk.Stack {
   public externalDNS: cdk.CfnOutput;
   constructor(parent: any, id: string, props?: any) {
@@ -35,14 +36,13 @@ export class GreetingStack extends cdk.Stack {
     // Create an App Mesh
     const mesh = new appmesh.Mesh(this, 'app-mesh', {
       meshName: 'greeting-app-mesh',
-      //egressFilter: appmesh.MeshFilterType.DROP_ALL
     });
 
     // Add capacity to it
     cluster.addCapacity('greeter-capacity', {
-      instanceType: new ec2.InstanceType('t3.xlarge'),
-      minCapacity: 3,
-      maxCapacity: 3,
+      instanceType: ec2.InstanceType.of(ec2.InstanceClass.STANDARD3, ec2.InstanceSize.MICRO),
+      minCapacity: 1,
+      maxCapacity: 2,
     });
 
     const healthCheck = {
@@ -53,6 +53,14 @@ export class GreetingStack extends cdk.Stack {
       retries: 3,
     };
 
+    // We could create an ecr, then when application code changes, build and publish the docker image to ecr with a new tag name/version
+    // then in the pipeline, add an env for the new image tag name, this code here will read the tag name from env
+    // since the new tag name version is different than the deployed one, this code will run again to deploy new image.
+    // We can just git clone this repo in the pipeline when needed
+
+    // ecs.SplunkLogDriver - sends log to splunk (need Splunk auth token)
+    // Right now we log to a file system inside the container, but we cannot ssh into that container to get the file
+    // Might as well log directly to splunk
     const nameService = new EcsFargateAppMeshService(this, 'name', {
       cluster: cluster,
       mesh: mesh,
@@ -114,9 +122,10 @@ export class GreetingStack extends cdk.Stack {
 
     // Last but not least setup an internet facing load balancer for
     // exposing the public facing greeter service to the public.
+    // VPC link and API gateway integration - https://github.com/aws/aws-cdk/issues/8066
     const externalLB = new elbv2.NetworkLoadBalancer(this, 'external', {
-      vpc,
       internetFacing: true, // TODO: try make this false and create VpcLink from ApiGateway to access it
+      vpc,
     });
 
     const externalListener = externalLB.addListener('PublicListener', { port: 80 });
