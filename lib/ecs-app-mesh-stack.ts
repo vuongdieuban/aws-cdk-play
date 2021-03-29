@@ -4,11 +4,17 @@ import * as ec2 from '@aws-cdk/aws-ec2';
 import * as appmesh from '@aws-cdk/aws-appmesh';
 import * as elbv2 from '@aws-cdk/aws-elasticloadbalancingv2';
 import * as servicediscovery from '@aws-cdk/aws-servicediscovery';
+import * as apigw from '@aws-cdk/aws-apigatewayv2';
+import { HttpAlbIntegration } from '@aws-cdk/aws-apigatewayv2-integrations';
 import { SecurityGroup } from '@aws-cdk/aws-ec2';
 import { EcsFargateAppMeshService } from './constructs/ecs-fargate-appmesh-service.construct';
 
+// ** IMPORTANT: Make sure all package have same version (1.95 across everything, remove the ^ symbol, 1.95.0 !== 1.95.1)
+
 export class GreetingStack extends cdk.Stack {
   public externalDNS: cdk.CfnOutput;
+  public httpApiGwEndpointsDNS: cdk.CfnOutput;
+
   constructor(parent: any, id: string, props?: any) {
     super(parent, id, props);
 
@@ -123,21 +129,32 @@ export class GreetingStack extends cdk.Stack {
     // Last but not least setup an internet facing load balancer for
     // exposing the public facing greeter service to the public.
     // VPC link and API gateway integration - https://github.com/aws/aws-cdk/issues/8066
-    const externalLB = new elbv2.NetworkLoadBalancer(this, 'external', {
-      internetFacing: true, // TODO: try make this false and create VpcLink from ApiGateway to access it
+    const externalLB = new elbv2.ApplicationLoadBalancer(this, 'external', {
+      internetFacing: false, // TODO: try make this false and create VpcLink from ApiGateway to access it
       vpc,
     });
 
     const externalListener = externalLB.addListener('PublicListener', { port: 80 });
-
     externalListener.addTargets('greeter', {
-      port: 3000,
+      port: 80,
       targets: [greeterService.service],
     });
 
     this.externalDNS = new cdk.CfnOutput(this, 'ExternalDNS', {
       exportName: 'greeter-app-external',
       value: externalLB.loadBalancerDnsName,
+    });
+
+    // Use VPC Link to proxy all request from api gatway to private Load balancer
+    const httpEndpoint = new apigw.HttpApi(this, 'HttpProxyPrivateApi', {
+      defaultIntegration: new HttpAlbIntegration({
+        listener: externalListener,
+      }),
+    });
+
+    this.httpApiGwEndpointsDNS = new cdk.CfnOutput(this, 'HttpApiGwDNS', {
+      exportName: 'http-api-dns',
+      value: httpEndpoint.url || 'no-url-found',
     });
   }
 }
