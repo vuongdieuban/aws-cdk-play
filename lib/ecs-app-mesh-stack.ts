@@ -15,7 +15,7 @@ export class GreetingStack extends cdk.Stack {
   public externalDNS: cdk.CfnOutput;
   public httpApiGwEndpointsDNS: cdk.CfnOutput;
 
-  constructor(scope: cdk.Stack, id: string, props?: cdk.StackProps) {
+  constructor(scope: cdk.App, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
     // Default Max Availability zone is 3, also default to 1 NAT Gateway per Az
