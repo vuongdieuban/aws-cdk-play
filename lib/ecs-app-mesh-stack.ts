@@ -18,11 +18,11 @@ export class GreetingStack extends cdk.Stack {
   constructor(scope: cdk.App, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // Default Max Availability zone is 3, also default to 1 NAT Gateway per Az
+    // Default Max Availability zone is 3, default to 1 NAT Gateway per Az
     // NAT gateway is charged even if it is not used - expensive
     const vpc = new ec2.Vpc(this, 'GreetingVpc', {
       maxAzs: 1,
-      natGateways: 0,
+      natGateways: 1,
     });
 
     const securityGroup = new SecurityGroup(this, 'ecs-appmesh-sg', {
@@ -51,7 +51,7 @@ export class GreetingStack extends cdk.Stack {
     cluster.addCapacity('greeter-capacity', {
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
       minCapacity: 1,
-      maxCapacity: 2,
+      maxCapacity: 1,
     });
 
     const healthCheck = {
