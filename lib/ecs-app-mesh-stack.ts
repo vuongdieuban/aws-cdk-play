@@ -47,6 +47,8 @@ export class GreetingStack extends cdk.Stack {
     });
 
     // Add capacity/auto-scaling to it
+    // This is the default auto scaling group, to create customize one, use autoscaling.AutoScalingGroup (@aws-cdk/aws-autoscalling)
+    // cluster.addAutoScalingGroup
     cluster.addCapacity('greeter-capacity', {
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
       minCapacity: 1,
