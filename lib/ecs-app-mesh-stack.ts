@@ -21,8 +21,7 @@ export class GreetingStack extends cdk.Stack {
     // Default Max Availability zone is 3, default to 1 NAT Gateway per Az
     // NAT gateway is charged even if it is not used - expensive
     const vpc = new ec2.Vpc(this, 'GreetingVpc', {
-      maxAzs: 1,
-      natGateways: 1,
+      maxAzs: 2,
     });
 
     const securityGroup = new SecurityGroup(this, 'ecs-appmesh-sg', {
@@ -135,9 +134,6 @@ export class GreetingStack extends cdk.Stack {
     const externalLB = new elbv2.ApplicationLoadBalancer(this, 'external', {
       internetFacing: false,
       vpc,
-      vpcSubnets: {
-        subnetType: ec2.SubnetType.PUBLIC, // default is Private
-      },
     });
 
     const externalListener = externalLB.addListener('PublicListener', { port: 80 });
