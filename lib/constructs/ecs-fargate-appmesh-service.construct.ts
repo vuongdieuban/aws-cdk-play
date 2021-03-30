@@ -57,13 +57,13 @@ export class EcsFargateAppMeshService extends cdk.Construct {
         APPMESH_VIRTUAL_NODE_NAME: `mesh/${mesh.meshName}/virtualNode/${serviceName}`,
         AWS_REGION: cdk.Stack.of(this).region,
       },
-      healthCheck: {
-        command: ['CMD-SHELL', 'curl -s http://localhost:9901/server_info | grep state | grep -q LIVE'],
-        startPeriod: cdk.Duration.days(1), // should be Duration.seconds (Duration.days is for demo only)
-        interval: cdk.Duration.days(1), // should be Duration.seconds but its expensive since it call the service every specified seconds
-        timeout: cdk.Duration.seconds(2),
-        retries: 3,
-      },
+      // healthCheck: {
+      //   command: ['CMD-SHELL', 'curl -s http://localhost:9901/server_info | grep state | grep -q LIVE'],
+      //   startPeriod: cdk.Duration.seconds(10),
+      //   interval: cdk.Duration.seconds(300),
+      //   timeout: cdk.Duration.seconds(2),
+      //   retries: 3,
+      // },
       memoryLimitMiB: 128,
       cpu: 128,
       user: '1337',

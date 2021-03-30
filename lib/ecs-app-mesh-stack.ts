@@ -56,8 +56,8 @@ export class GreetingStack extends cdk.Stack {
 
     const healthCheck = {
       command: ['curl localhost:3000'],
-      startPeriod: cdk.Duration.days(1),
-      interval: cdk.Duration.days(1), // should be Duration.seconds but its expensive since it call the service every specified seconds
+      startPeriod: cdk.Duration.seconds(10),
+      interval: cdk.Duration.seconds(300),
       timeout: cdk.Duration.seconds(2),
       retries: 3,
     };
@@ -77,7 +77,7 @@ export class GreetingStack extends cdk.Stack {
       securityGroup,
       appContainerOptions: {
         image: ecs.ContainerImage.fromRegistry('nathanpeck/name'),
-        healthCheck: healthCheck,
+        // healthCheck,
         memoryLimitMiB: 128,
         cpu: 128,
         logging: new ecs.AwsLogDriver({
@@ -96,7 +96,7 @@ export class GreetingStack extends cdk.Stack {
       securityGroup,
       appContainerOptions: {
         image: ecs.ContainerImage.fromRegistry('nathanpeck/greeting'),
-        healthCheck: healthCheck,
+        // healthCheck,
         memoryLimitMiB: 128,
         logging: new ecs.AwsLogDriver({
           streamPrefix: 'app-mesh-greeting',
@@ -114,7 +114,7 @@ export class GreetingStack extends cdk.Stack {
       securityGroup,
       appContainerOptions: {
         image: ecs.ContainerImage.fromRegistry('nathanpeck/greeter'),
-        healthCheck: healthCheck,
+        // healthCheck,
         memoryLimitMiB: 128,
         logging: new ecs.AwsLogDriver({
           streamPrefix: 'app-mesh-greeter',
