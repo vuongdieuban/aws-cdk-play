@@ -76,6 +76,7 @@ export class EcsFargateAppMeshService extends cdk.Construct {
       vpcSubnets: {
         subnetType: ec2.SubnetType.PUBLIC, // default is Private
       },
+      assignPublicIp: true, // remove if SubnetType is Private
       desiredCount: 1, // number of task that keep running
       taskDefinition,
       securityGroup,
