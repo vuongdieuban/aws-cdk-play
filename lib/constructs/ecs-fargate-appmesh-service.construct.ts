@@ -65,7 +65,6 @@ export class EcsFargateAppMeshService extends cdk.Construct {
       //   retries: 3,
       // },
       memoryLimitMiB: 128,
-      cpu: 128,
       user: '1337',
       logging: new ecs.AwsLogDriver({
         streamPrefix: `${serviceName}-envoy`,

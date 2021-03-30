@@ -78,7 +78,6 @@ export class GreetingStack extends cdk.Stack {
         image: ecs.ContainerImage.fromRegistry('nathanpeck/name'),
         // healthCheck,
         memoryLimitMiB: 128,
-        cpu: 128,
         logging: new ecs.AwsLogDriver({
           streamPrefix: 'app-mesh-name',
         }),
