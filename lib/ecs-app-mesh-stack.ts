@@ -15,8 +15,8 @@ export class GreetingStack extends cdk.Stack {
   public externalDNS: cdk.CfnOutput;
   public httpApiGwEndpointsDNS: cdk.CfnOutput;
 
-  constructor(parent: any, id: string, props?: any) {
-    super(parent, id, props);
+  constructor(scope: any, id: string, props?: any) {
+    super(scope, id, props);
 
     const vpc = new ec2.Vpc(this, 'GreetingVpc', { maxAzs: 2 });
 
@@ -54,7 +54,7 @@ export class GreetingStack extends cdk.Stack {
     const healthCheck = {
       command: ['curl localhost:3000'],
       startPeriod: cdk.Duration.seconds(10),
-      interval: cdk.Duration.seconds(5),
+      interval: cdk.Duration.days(1),
       timeout: cdk.Duration.seconds(2),
       retries: 3,
     };
@@ -70,12 +70,13 @@ export class GreetingStack extends cdk.Stack {
     const nameService = new EcsFargateAppMeshService(this, 'name', {
       cluster: cluster,
       mesh: mesh,
-      portNumber: 3000,
+      appPortNumber: 3000,
       securityGroup,
-      applicationContainer: {
+      appContainerOptions: {
         image: ecs.ContainerImage.fromRegistry('nathanpeck/name'),
         healthCheck: healthCheck,
         memoryLimitMiB: 128,
+        cpu: 128,
         logging: new ecs.AwsLogDriver({
           streamPrefix: 'app-mesh-name',
         }),
@@ -88,9 +89,9 @@ export class GreetingStack extends cdk.Stack {
     const greetingService = new EcsFargateAppMeshService(this, 'greeting', {
       cluster: cluster,
       mesh: mesh,
-      portNumber: 3000,
+      appPortNumber: 3000,
       securityGroup,
-      applicationContainer: {
+      appContainerOptions: {
         image: ecs.ContainerImage.fromRegistry('nathanpeck/greeting'),
         healthCheck: healthCheck,
         memoryLimitMiB: 128,
@@ -106,9 +107,9 @@ export class GreetingStack extends cdk.Stack {
     const greeterService = new EcsFargateAppMeshService(this, 'greeter', {
       cluster: cluster,
       mesh: mesh,
-      portNumber: 3000,
+      appPortNumber: 3000,
       securityGroup,
-      applicationContainer: {
+      appContainerOptions: {
         image: ecs.ContainerImage.fromRegistry('nathanpeck/greeter'),
         healthCheck: healthCheck,
         memoryLimitMiB: 128,
@@ -126,11 +127,10 @@ export class GreetingStack extends cdk.Stack {
     greeterService.connectToMeshService(nameService);
     greeterService.connectToMeshService(greetingService);
 
-    // Last but not least setup an internet facing load balancer for
-    // exposing the public facing greeter service to the public.
-    // VPC link and API gateway integration - https://github.com/aws/aws-cdk/issues/8066
+    // Setup an internet facing load balancer for exposing the public facing greeter service to the public.
+    // Right now it is set to false because we get traffic from Api Gateway thru VPC Link (ApiGateway directly proxy public traffic to this ALB)
     const externalLB = new elbv2.ApplicationLoadBalancer(this, 'external', {
-      internetFacing: false, // TODO: try make this false and create VpcLink from ApiGateway to access it
+      internetFacing: false,
       vpc,
     });
 

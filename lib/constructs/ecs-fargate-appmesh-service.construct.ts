@@ -3,8 +3,14 @@ import * as ecs from '@aws-cdk/aws-ecs';
 import * as ec2 from '@aws-cdk/aws-ec2';
 import * as appmesh from '@aws-cdk/aws-appmesh';
 import { DnsRecordType } from '@aws-cdk/aws-servicediscovery';
-import { Protocol, SecurityGroup } from '@aws-cdk/aws-ec2';
-import { Backend } from '@aws-cdk/aws-appmesh';
+
+export interface EcsFargateAppMeshServiceProps {
+  cluster: ecs.Cluster;
+  mesh: appmesh.Mesh;
+  securityGroup: ec2.SecurityGroup;
+  appContainerOptions: ecs.ContainerDefinitionOptions;
+  appPortNumber: number;
+}
 
 export class EcsFargateAppMeshService extends cdk.Construct {
   public service: ecs.FargateService;
@@ -14,21 +20,20 @@ export class EcsFargateAppMeshService extends cdk.Construct {
   public applicationContainer: ecs.ContainerDefinition;
   public virtualNode: appmesh.VirtualNode;
   public virtualService: appmesh.VirtualService;
-  public securityGroup: SecurityGroup;
+  public securityGroup: ec2.SecurityGroup;
 
-  constructor(scope: any, id: string, props: any) {
+  constructor(scope: cdk.Construct, id: string, props: EcsFargateAppMeshServiceProps) {
     super(scope, id);
 
     const cluster = props.cluster;
     const mesh = props.mesh;
-    const applicationContainer = props.applicationContainer;
+    const appContainerOptions = props.appContainerOptions;
 
     this.securityGroup = props.securityGroup;
     this.serviceName = id;
-    this.portNumber = props.portNumber;
+    this.portNumber = props.appPortNumber;
 
     this.taskDefinition = new ecs.FargateTaskDefinition(this, `${this.serviceName}-task-definition`, {
-      // networkMode: ecs.NetworkMode.AWS_VPC,
       proxyConfiguration: new ecs.AppMeshProxyConfiguration({
         containerName: 'envoy',
         properties: {
@@ -36,19 +41,11 @@ export class EcsFargateAppMeshService extends cdk.Construct {
           proxyEgressPort: 15001,
           proxyIngressPort: 15000,
           ignoredUID: 1337,
-          // EgressIgnoredIPs: ['169.254.170.2', '169.254.169.254'],
         },
       }),
     });
 
-    applicationContainer.dependsOn = [
-      {
-        containerName: 'envoy',
-        condition: 'HEALTHY',
-      },
-    ];
-
-    this.applicationContainer = this.taskDefinition.addContainer('app', applicationContainer);
+    this.applicationContainer = this.taskDefinition.addContainer('app', appContainerOptions);
     this.applicationContainer.addPortMappings({
       containerPort: this.portNumber,
       hostPort: this.portNumber,
@@ -65,11 +62,12 @@ export class EcsFargateAppMeshService extends cdk.Construct {
       healthCheck: {
         command: ['CMD-SHELL', 'curl -s http://localhost:9901/server_info | grep state | grep -q LIVE'],
         startPeriod: cdk.Duration.seconds(10),
-        interval: cdk.Duration.seconds(5),
+        interval: cdk.Duration.days(1),
         timeout: cdk.Duration.seconds(2),
         retries: 3,
       },
       memoryLimitMiB: 128,
+      cpu: 128,
       user: '1337',
       logging: new ecs.AwsLogDriver({
         streamPrefix: `${this.serviceName}-envoy`,
@@ -104,7 +102,7 @@ export class EcsFargateAppMeshService extends cdk.Construct {
     // Create virtual service to make the virtual node accessible
     this.virtualService = new appmesh.VirtualService(this, `${this.serviceName}-virtual-service`, {
       virtualServiceProvider: appmesh.VirtualServiceProvider.virtualNode(this.virtualNode),
-      virtualServiceName: `${this.serviceName}.${cluster.defaultCloudMapNamespace.namespaceName}`,
+      virtualServiceName: `${this.serviceName}.${cluster.defaultCloudMapNamespace?.namespaceName}`,
     });
   }
 
@@ -113,12 +111,12 @@ export class EcsFargateAppMeshService extends cdk.Construct {
   // can talk to each other. Also adjusts the virtual node for this service
   // so that its Envoy intercepts traffic that can be handled by the other
   // service's virtual service.
-  connectToMeshService(appMeshService: EcsFargateAppMeshService) {
-    var trafficPort = new ec2.Port({
+  public connectToMeshService(appMeshService: EcsFargateAppMeshService) {
+    const trafficPort = new ec2.Port({
       stringRepresentation: 'port',
-      protocol: Protocol.TCP,
+      protocol: ec2.Protocol.TCP,
       fromPort: appMeshService.portNumber,
-      toPort: 3000,
+      toPort: appMeshService.portNumber,
     });
 
     // Adjust security group to allow traffic from this app mesh enabled service
@@ -129,8 +127,8 @@ export class EcsFargateAppMeshService extends cdk.Construct {
       `Inbound traffic from the app mesh enabled ${this.serviceName}`,
     );
 
-    // Now adjust this app mesh service's virtual node to add a backend
-    // that is the other service's virtual service
-    this.virtualNode.addBackend(Backend.virtualService(appMeshService.virtualService));
+    // Adjust this app mesh service's virtual node to add a backend - that is the other service's virtual service
+    // Backend allow this service to communicate to other service
+    this.virtualNode.addBackend(appmesh.Backend.virtualService(appMeshService.virtualService));
   }
 }
