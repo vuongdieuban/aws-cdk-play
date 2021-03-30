@@ -15,10 +15,10 @@ export class GreetingStack extends cdk.Stack {
   public externalDNS: cdk.CfnOutput;
   public httpApiGwEndpointsDNS: cdk.CfnOutput;
 
-  constructor(scope: any, id: string, props?: any) {
+  constructor(scope: cdk.Stack, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const vpc = new ec2.Vpc(this, 'GreetingVpc', { maxAzs: 2 });
+    const vpc = new ec2.Vpc(this, 'GreetingVpc', { maxAzs: 1 });
 
     const securityGroup = new SecurityGroup(this, 'ecs-appmesh-sg', {
       securityGroupName: 'appmesh-sg',
@@ -32,7 +32,7 @@ export class GreetingStack extends cdk.Stack {
 
     // Create an ECS cluster
     const cluster = new ecs.Cluster(this, 'Cluster', {
-      vpc: vpc,
+      vpc,
       defaultCloudMapNamespace: {
         name: 'internal',
         type: servicediscovery.NamespaceType.DNS_PRIVATE,
@@ -53,8 +53,8 @@ export class GreetingStack extends cdk.Stack {
 
     const healthCheck = {
       command: ['curl localhost:3000'],
-      startPeriod: cdk.Duration.seconds(10),
-      interval: cdk.Duration.days(1),
+      startPeriod: cdk.Duration.days(1),
+      interval: cdk.Duration.days(1), // should be Duration.seconds but its expensive since it call the service every specified seconds
       timeout: cdk.Duration.seconds(2),
       retries: 3,
     };
@@ -68,7 +68,7 @@ export class GreetingStack extends cdk.Stack {
     // Right now we log to a file system inside the container, but we cannot ssh into that container to get the file
     // Might as well log directly to splunk
     const nameService = new EcsFargateAppMeshService(this, 'name', {
-      cluster: cluster,
+      cluster,
       mesh: mesh,
       appPortNumber: 3000,
       securityGroup,
@@ -87,7 +87,7 @@ export class GreetingStack extends cdk.Stack {
     });
 
     const greetingService = new EcsFargateAppMeshService(this, 'greeting', {
-      cluster: cluster,
+      cluster,
       mesh: mesh,
       appPortNumber: 3000,
       securityGroup,
@@ -105,7 +105,7 @@ export class GreetingStack extends cdk.Stack {
     });
 
     const greeterService = new EcsFargateAppMeshService(this, 'greeter', {
-      cluster: cluster,
+      cluster,
       mesh: mesh,
       appPortNumber: 3000,
       securityGroup,
