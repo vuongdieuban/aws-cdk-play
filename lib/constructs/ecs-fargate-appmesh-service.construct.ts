@@ -74,9 +74,12 @@ export class EcsFargateAppMeshService extends cdk.Construct {
 
     this.service = new ecs.FargateService(this, `${serviceName}-service`, {
       cluster,
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PUBLIC, // default is Private
+      },
       desiredCount: 1, // number of task that keep running
-      taskDefinition: taskDefinition,
-      securityGroup: securityGroup,
+      taskDefinition,
+      securityGroup,
       cloudMapOptions: {
         dnsRecordType: DnsRecordType.A,
         dnsTtl: cdk.Duration.seconds(10),

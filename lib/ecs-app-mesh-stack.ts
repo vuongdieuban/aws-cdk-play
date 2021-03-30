@@ -18,16 +18,19 @@ export class GreetingStack extends cdk.Stack {
   constructor(scope: cdk.Stack, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const vpc = new ec2.Vpc(this, 'GreetingVpc', { maxAzs: 1 });
+    // Default Max Availability zone is 3, also default to 1 NAT Gateway per Az
+    // NAT gateway is charged even if it is not used - expensive
+    const vpc = new ec2.Vpc(this, 'GreetingVpc', {
+      maxAzs: 1,
+      natGateways: 0,
+    });
 
     const securityGroup = new SecurityGroup(this, 'ecs-appmesh-sg', {
       securityGroupName: 'appmesh-sg',
-      vpc,
       allowAllOutbound: true,
+      vpc,
     });
 
-    // TODO: This allow 80 and 3000 to all service, maybe only need 3000, doesn't need 80.
-    // 80 port is for the public listener
     securityGroup.addIngressRule(ec2.Peer.ipv4('0.0.0.0/0'), ec2.Port.tcp(3000), 'App Port');
 
     // Create an ECS cluster
@@ -69,7 +72,7 @@ export class GreetingStack extends cdk.Stack {
     // Might as well log directly to splunk
     const nameService = new EcsFargateAppMeshService(this, 'name', {
       cluster,
-      mesh: mesh,
+      mesh,
       appPortNumber: 3000,
       securityGroup,
       appContainerOptions: {
@@ -88,7 +91,7 @@ export class GreetingStack extends cdk.Stack {
 
     const greetingService = new EcsFargateAppMeshService(this, 'greeting', {
       cluster,
-      mesh: mesh,
+      mesh,
       appPortNumber: 3000,
       securityGroup,
       appContainerOptions: {
@@ -106,7 +109,7 @@ export class GreetingStack extends cdk.Stack {
 
     const greeterService = new EcsFargateAppMeshService(this, 'greeter', {
       cluster,
-      mesh: mesh,
+      mesh,
       appPortNumber: 3000,
       securityGroup,
       appContainerOptions: {
@@ -132,6 +135,9 @@ export class GreetingStack extends cdk.Stack {
     const externalLB = new elbv2.ApplicationLoadBalancer(this, 'external', {
       internetFacing: false,
       vpc,
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PUBLIC, // default is Private
+      },
     });
 
     const externalListener = externalLB.addListener('PublicListener', { port: 80 });
