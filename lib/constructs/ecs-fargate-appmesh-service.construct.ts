@@ -71,6 +71,8 @@ export class EcsFargateAppMeshService extends cdk.Construct {
       }),
     });
 
+    // Running this in public subnet because if it is Private (by default), when it pulls docker image to build, it needs to go thru the NAT Gateway
+    // NAT Gateway is expensive, so I make it public subnet so it can skip the NAT Gateway and just pull from normal Internet gatway
     this.service = new ecs.FargateService(this, `${serviceName}-service`, {
       cluster,
       vpcSubnets: {
