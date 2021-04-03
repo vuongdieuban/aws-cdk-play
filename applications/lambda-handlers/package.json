@@ -1,13 +1,17 @@
 {
   "name": "lambda-handlers",
   "version": "1.0.0",
-  "description": "",
   "main": "dist/index.js",
   "scripts": {
     "prebuild": "rm -rf dist",
-    "build": "tsc",
+    "build": "tsc && zip -r lambda-functions ./dist ./node_modules",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@aws-sdk/client-servicediscovery": "^3.10.0",
+    "axios": "^0.21.1"
+  }
 }

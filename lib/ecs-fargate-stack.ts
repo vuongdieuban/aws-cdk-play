@@ -25,7 +25,7 @@ export class EcsFargateStack extends Stack {
     const fargateService = new ApplicationLoadBalancedFargateService(this, 'EcsFargateService', {
       cluster,
       taskDefinition,
-      desiredCount: 2,
+      desiredCount: 1,
       publicLoadBalancer: true,
     });
   }

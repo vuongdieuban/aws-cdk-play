@@ -4,16 +4,15 @@ import * as ec2 from '@aws-cdk/aws-ec2';
 import * as appmesh from '@aws-cdk/aws-appmesh';
 import * as elbv2 from '@aws-cdk/aws-elasticloadbalancingv2';
 import * as servicediscovery from '@aws-cdk/aws-servicediscovery';
-import * as apigw from '@aws-cdk/aws-apigatewayv2';
-import { HttpAlbIntegration } from '@aws-cdk/aws-apigatewayv2-integrations';
 import { SecurityGroup } from '@aws-cdk/aws-ec2';
 import { EcsFargateAppMeshService } from './constructs/ecs-fargate-appmesh-service.construct';
+import { LambdaRestApi } from '@aws-cdk/aws-apigateway';
+import { Function as LambdaFunction, Runtime, Code } from '@aws-cdk/aws-lambda';
 
 // ** IMPORTANT: Make sure all package have same version (1.95 across everything, remove the ^ symbol, 1.95.0 !== 1.95.1)
 
 export class GreetingStack extends cdk.Stack {
   public externalDNS: cdk.CfnOutput;
-  public httpApiGwEndpointsDNS: cdk.CfnOutput;
 
   constructor(scope: cdk.App, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -148,16 +147,15 @@ export class GreetingStack extends cdk.Stack {
       value: externalLB.loadBalancerDnsName,
     });
 
-    // Use VPC Link to proxy all request from api gatway to private Load balancer
-    const httpEndpoint = new apigw.HttpApi(this, 'HttpProxyPrivateApi', {
-      defaultIntegration: new HttpAlbIntegration({
-        listener: externalListener,
-      }),
+    const greeterHandler = new LambdaFunction(this, 'GreeterHandler', {
+      runtime: Runtime.NODEJS_14_X,
+      code: Code.fromAsset('applications/lambda-handlers/lambda-functions.zip'),
+      handler: 'index.greeterHandler',
+      vpc,
     });
 
-    this.httpApiGwEndpointsDNS = new cdk.CfnOutput(this, 'HttpApiGwDNS', {
-      exportName: 'http-api-dns',
-      value: httpEndpoint.url || 'no-url-found',
+    const restApi = new LambdaRestApi(this, 'LambdaEndpoint', {
+      handler: greeterHandler,
     });
   }
 }
