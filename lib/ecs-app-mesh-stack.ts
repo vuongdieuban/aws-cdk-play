@@ -4,10 +4,11 @@ import * as ec2 from '@aws-cdk/aws-ec2';
 import * as appmesh from '@aws-cdk/aws-appmesh';
 import * as elbv2 from '@aws-cdk/aws-elasticloadbalancingv2';
 import * as servicediscovery from '@aws-cdk/aws-servicediscovery';
-import { SecurityGroup } from '@aws-cdk/aws-ec2';
+import { SecurityGroup, SubnetType } from '@aws-cdk/aws-ec2';
 import { EcsFargateAppMeshService } from './constructs/ecs-fargate-appmesh-service.construct';
-import { HttpAlbIntegration } from '@aws-cdk/aws-apigatewayv2-integrations';
-import { HttpApi } from '@aws-cdk/aws-apigatewayv2';
+import { HttpAlbIntegration, LambdaProxyIntegration } from '@aws-cdk/aws-apigatewayv2-integrations';
+import { HttpApi, CorsHttpMethod, HttpMethod } from '@aws-cdk/aws-apigatewayv2';
+import { Function as LambdaFunction, Runtime, Code } from '@aws-cdk/aws-lambda';
 
 // ** IMPORTANT: Make sure all package have same version (1.95 across everything, remove the ^ symbol, 1.95.0 !== 1.95.1)
 
@@ -135,6 +136,9 @@ export class GreetingStack extends cdk.Stack {
     const externalLB = new elbv2.ApplicationLoadBalancer(this, 'external', {
       internetFacing: false,
       vpc,
+      vpcSubnets: {
+        subnetType: SubnetType.PRIVATE,
+      },
     });
 
     const externalListener = externalLB.addListener('PublicListener', { port: 80 });
@@ -148,15 +152,48 @@ export class GreetingStack extends cdk.Stack {
       value: externalLB.loadBalancerDnsName,
     });
 
-    const httpEndpoint = new HttpApi(this, 'HttpProxyPrivateApi', {
-      defaultIntegration: new HttpAlbIntegration({
-        listener: externalListener,
-      }),
+    // const httpEndpoint = new HttpApi(this, 'HttpApiPrivateItg', {
+    //   defaultIntegration: new HttpAlbIntegration({
+    //     listener: externalListener,
+    //   }),
+    // });
+
+    // this.httpApiGwEndpointsDNS = new cdk.CfnOutput(this, 'HttpApiGwDNS', {
+    //   exportName: 'http-api-dns',
+    //   value: httpEndpoint.url || 'no-url-found',
+    // });
+
+    const greeterHandler = new LambdaFunction(this, 'GreeterHandler', {
+      runtime: Runtime.NODEJS_14_X,
+      code: Code.fromAsset('applications/lambda-handlers/deploy'),
+      handler: 'greeter-handler.greeterHandler',
+      vpc,
+      vpcSubnets: {
+        subnetType: SubnetType.PRIVATE,
+      },
     });
 
-    this.httpApiGwEndpointsDNS = new cdk.CfnOutput(this, 'HttpApiGwDNS', {
-      exportName: 'http-api-dns',
-      value: httpEndpoint.url || 'no-url-found',
+    const greeterIntegration = new LambdaProxyIntegration({
+      handler: greeterHandler,
+    });
+
+    const httpApi = new HttpApi(this, 'HttpApi', {
+      corsPreflight: {
+        allowHeaders: ['*'],
+        allowMethods: [CorsHttpMethod.GET, CorsHttpMethod.POST, CorsHttpMethod.OPTIONS],
+        allowOrigins: ['*'],
+      },
+    });
+
+    httpApi.addRoutes({
+      path: '/',
+      methods: [HttpMethod.GET],
+      integration: greeterIntegration,
+    });
+
+    new cdk.CfnOutput(this, 'HttpApiGwDns', {
+      exportName: 'http-api-external',
+      value: httpApi.url || 'no-http-url',
     });
   }
 }

@@ -1,8 +1,8 @@
 import { Stack, StackProps, App, CfnOutput } from '@aws-cdk/core';
 import { Function as LambdaFunction, Runtime, Code } from '@aws-cdk/aws-lambda';
-import { LambdaRestApi } from '@aws-cdk/aws-apigateway';
-import { SubnetType, Vpc } from '@aws-cdk/aws-ec2';
-
+import { Vpc } from '@aws-cdk/aws-ec2';
+import { LambdaProxyIntegration } from '@aws-cdk/aws-apigatewayv2-integrations';
+import { HttpApi, CorsHttpMethod, HttpMethod } from '@aws-cdk/aws-apigatewayv2';
 export class LambdaHandlerStack extends Stack {
   constructor(scope: App, id: string, props?: StackProps) {
     super(scope, id, props);
@@ -26,13 +26,27 @@ export class LambdaHandlerStack extends Stack {
     //   }),
     // );
 
-    const restApi = new LambdaRestApi(this, 'Endpoint', {
+    const helloIntegration = new LambdaProxyIntegration({
       handler: helloHandler,
+    });
+
+    const httpApi = new HttpApi(this, 'HttpApi', {
+      corsPreflight: {
+        allowHeaders: ['*'],
+        allowMethods: [CorsHttpMethod.GET, CorsHttpMethod.POST, CorsHttpMethod.OPTIONS],
+        allowOrigins: ['*'],
+      },
+    });
+
+    httpApi.addRoutes({
+      path: '/',
+      methods: [HttpMethod.GET],
+      integration: helloIntegration,
     });
 
     new CfnOutput(this, 'RestApi', {
       exportName: 'rest-api-dns',
-      value: restApi.url || 'no-url-found',
+      value: httpApi.url || 'no-url-found',
     });
   }
 }

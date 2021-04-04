@@ -18,14 +18,13 @@ export const greeterHandler = async function (event: any) {
     // if (!url) {
     //   return 'No Url';
     // }
-    // const { data } = await axios.get('10.0.163.44');
-    // const { data: data2 } = await axios.get('10.0.219.175');
-    // console.log('Data from Greeter', data);
-    // console.log('Data from 2', data2);
+    const { data } = await axios.get('http://10.0.219.221');
+    console.log('Data from Greeter', data);
     return {
       headers: { 'Content-Type': 'application/json' },
       body: {
-        data: 'hellow World',
+        text: 'hellow World',
+        data,
       },
     };
   } catch (err) {
