@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
-    "prebuild": "rm -rf dist",
-    "build": "tsc && zip -r lambda-functions ./dist ./node_modules",
+    "prebuild": "rm -rf dist && rm -rf deploy && rm -rf deploy.zip",
+    "build": "tsc && mkdir deploy && cp -r ./node_modules ./deploy && cp -r ./dist/* ./deploy && zip -r deploy ./deploy",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

@@ -13,10 +13,18 @@ export class LambdaHandlerStack extends Stack {
 
     const helloHandler = new LambdaFunction(this, 'HelloHandler', {
       runtime: Runtime.NODEJS_14_X,
-      code: Code.fromAsset('applications/lambda-handlers/dist'),
+      code: Code.fromAsset('applications/lambda-handlers/deploy'),
       handler: 'hello-world.helloHandler', // hello-world.js file, helloHandler function,
       vpc,
     });
+
+    // Add additional policy to existing role
+    // helloHandler.role?.addToPrincipalPolicy(
+    //   new PolicyStatement({
+    //     resources: ['*'],
+    //     actions: ['servicediscovery:*'],
+    //   }),
+    // );
 
     const restApi = new LambdaRestApi(this, 'Endpoint', {
       handler: helloHandler,

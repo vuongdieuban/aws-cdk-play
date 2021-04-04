@@ -6,8 +6,6 @@ import * as elbv2 from '@aws-cdk/aws-elasticloadbalancingv2';
 import * as servicediscovery from '@aws-cdk/aws-servicediscovery';
 import { SecurityGroup } from '@aws-cdk/aws-ec2';
 import { EcsFargateAppMeshService } from './constructs/ecs-fargate-appmesh-service.construct';
-import { LambdaRestApi } from '@aws-cdk/aws-apigateway';
-import { Function as LambdaFunction, Runtime, Code } from '@aws-cdk/aws-lambda';
 
 // ** IMPORTANT: Make sure all package have same version (1.95 across everything, remove the ^ symbol, 1.95.0 !== 1.95.1)
 
@@ -145,17 +143,6 @@ export class GreetingStack extends cdk.Stack {
     this.externalDNS = new cdk.CfnOutput(this, 'ExternalDNS', {
       exportName: 'greeter-app-external',
       value: externalLB.loadBalancerDnsName,
-    });
-
-    const greeterHandler = new LambdaFunction(this, 'GreeterHandler', {
-      runtime: Runtime.NODEJS_14_X,
-      code: Code.fromAsset('applications/lambda-handlers/lambda-functions.zip'),
-      handler: 'index.greeterHandler',
-      vpc,
-    });
-
-    const restApi = new LambdaRestApi(this, 'LambdaEndpoint', {
-      handler: greeterHandler,
     });
   }
 }
