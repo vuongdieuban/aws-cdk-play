@@ -6,11 +6,14 @@ import * as elbv2 from '@aws-cdk/aws-elasticloadbalancingv2';
 import * as servicediscovery from '@aws-cdk/aws-servicediscovery';
 import { SecurityGroup } from '@aws-cdk/aws-ec2';
 import { EcsFargateAppMeshService } from './constructs/ecs-fargate-appmesh-service.construct';
+import { HttpAlbIntegration } from '@aws-cdk/aws-apigatewayv2-integrations';
+import { HttpApi } from '@aws-cdk/aws-apigatewayv2';
 
 // ** IMPORTANT: Make sure all package have same version (1.95 across everything, remove the ^ symbol, 1.95.0 !== 1.95.1)
 
 export class GreetingStack extends cdk.Stack {
   public externalDNS: cdk.CfnOutput;
+  public httpApiGwEndpointsDNS: cdk.CfnOutput;
 
   constructor(scope: cdk.App, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -143,6 +146,17 @@ export class GreetingStack extends cdk.Stack {
     this.externalDNS = new cdk.CfnOutput(this, 'ExternalDNS', {
       exportName: 'greeter-app-external',
       value: externalLB.loadBalancerDnsName,
+    });
+
+    const httpEndpoint = new HttpApi(this, 'HttpProxyPrivateApi', {
+      defaultIntegration: new HttpAlbIntegration({
+        listener: externalListener,
+      }),
+    });
+
+    this.httpApiGwEndpointsDNS = new cdk.CfnOutput(this, 'HttpApiGwDNS', {
+      exportName: 'http-api-dns',
+      value: httpEndpoint.url || 'no-url-found',
     });
   }
 }
