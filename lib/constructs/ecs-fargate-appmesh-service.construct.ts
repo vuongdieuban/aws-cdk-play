@@ -4,43 +4,43 @@ import * as ec2 from '@aws-cdk/aws-ec2';
 import * as appmesh from '@aws-cdk/aws-appmesh';
 import { DnsRecordType } from '@aws-cdk/aws-servicediscovery';
 
+interface FargateServiceDefinition {
+  name: string; // name will be used to register with service discovery
+  port: number;
+  securityGroup: ec2.SecurityGroup;
+  containerOptions: ecs.ContainerDefinitionOptions;
+}
+
 export interface EcsFargateAppMeshServiceProps {
   cluster: ecs.Cluster;
   mesh: appmesh.Mesh;
-  securityGroup: ec2.SecurityGroup;
-  appContainerOptions: ecs.ContainerDefinitionOptions;
-  appPortNumber: number;
+  fargateServices: FargateServiceDefinition[];
 }
 
 export class EcsFargateAppMeshService extends cdk.Construct {
-  public fargateService: ecs.FargateService;
-  public appPortNumber: number;
-  public serviceName: string;
-  public virtualNode: appmesh.VirtualNode;
+  public fargateServices: ecs.FargateService[] = [];
+  public virtualNodes: appmesh.VirtualNode[];
   public virtualService: appmesh.VirtualService;
 
   constructor(scope: cdk.Construct, id: string, props: EcsFargateAppMeshServiceProps) {
     super(scope, id);
-
-    const { cluster, mesh, appPortNumber } = props;
-
-    this.appPortNumber = appPortNumber;
+    const { cluster, mesh, fargateServices } = props;
     const serviceName = id;
-    this.serviceName = serviceName;
+    const cloudmapNameSpace = cluster.defaultCloudMapNamespace?.namespaceName;
+    if (!cloudmapNameSpace) {
+      throw new Error('No CloudMapNameSpace');
+    }
 
-    const appService = this.createFargateService(serviceName, props);
-    const serviceDiscovery = this.getServiceDiscovery(appService);
-
-    this.createVirtualNodes(serviceName, mesh, serviceDiscovery);
-    this.createVirtualRouter();
-    this.addRoutesToVirtualRouter();
-    this.createVirtualService();
-
-    // Create virtual service to make the virtual node accessible
-    this.virtualService = new appmesh.VirtualService(this, `${serviceName}-virtual-service`, {
-      virtualServiceProvider: appmesh.VirtualServiceProvider.virtualNode(this.virtualNode),
-      virtualServiceName: `${serviceName}.${cluster.defaultCloudMapNamespace?.namespaceName}`,
+    this.virtualNodes = fargateServices.map(serviceDefinition => {
+      const { name, port } = serviceDefinition;
+      const appService = this.createFargateService(cluster, mesh, serviceDefinition);
+      const serviceDiscovery = this.getServiceDiscovery(appService);
+      this.fargateServices.push(appService);
+      return this.createVirtualNode(name, port, mesh, serviceDiscovery);
     });
+
+    const virtualRouter = this.createVirtualRouterAndAddRoutes(mesh, this.virtualNodes);
+    this.virtualService = this.createVirtualService(cloudmapNameSpace, serviceName, virtualRouter);
   }
 
   // Connect this mesh enabled service to another mesh enabled service.
@@ -49,32 +49,22 @@ export class EcsFargateAppMeshService extends cdk.Construct {
   // so that its Envoy intercepts traffic that can be handled by the other
   // service's virtual service.
   public addBackend(backendService: EcsFargateAppMeshService) {
-    const trafficPort = new ec2.Port({
-      stringRepresentation: 'port',
-      protocol: ec2.Protocol.TCP,
-      fromPort: backendService.appPortNumber,
-      toPort: backendService.appPortNumber,
+    this.virtualNodes.forEach(node => {
+      node.addBackend(appmesh.Backend.virtualService(backendService.virtualService));
     });
-
-    // Adjust security group to allow traffic from this app mesh enabled service to the other app mesh enabled service.
-    this.fargateService.connections.allowTo(
-      backendService.fargateService,
-      trafficPort,
-      `Inbound traffic from the app mesh enabled ${this.serviceName}`,
-    );
-
-    // Adjust this app mesh service's virtual node to add a backend - that is the other service's virtual service
-    // Backend allow this service to communicate to other service
-    this.virtualNode.addBackend(appmesh.Backend.virtualService(backendService.virtualService));
   }
 
-  private createFargateService(serviceName: string, props: EcsFargateAppMeshServiceProps) {
-    const { securityGroup, cluster } = props;
-    const taskDefinition = this.createFargateTaskDef(serviceName, props);
+  private createFargateService(
+    cluster: ecs.Cluster,
+    mesh: appmesh.Mesh,
+    serviceDefinition: FargateServiceDefinition,
+  ) {
+    const { name, securityGroup } = serviceDefinition;
+    const taskDefinition = this.createFargateTaskDef(mesh, serviceDefinition);
 
     // Running this in public subnet because if it is Private (by default), when it pulls docker image to build, it needs to go thru the NAT Gateway
     // NAT Gateway is expensive, so I make it public subnet so it can skip the NAT Gateway and just pull from normal Internet gatway
-    this.fargateService = new ecs.FargateService(this, `${serviceName}-service`, {
+    return new ecs.FargateService(this, `${name}-service`, {
       cluster,
       vpcSubnets: {
         subnetType: ec2.SubnetType.PUBLIC, // default is Private
@@ -87,24 +77,22 @@ export class EcsFargateAppMeshService extends cdk.Construct {
         dnsRecordType: DnsRecordType.A,
         dnsTtl: cdk.Duration.seconds(10),
         failureThreshold: 2,
-        name: serviceName,
+        name,
       },
     });
-
-    return this.fargateService;
   }
 
   private createFargateTaskDef(
-    serviceName: string,
-    props: EcsFargateAppMeshServiceProps,
+    mesh: appmesh.Mesh,
+    serviceDefinition: FargateServiceDefinition,
   ): ecs.FargateTaskDefinition {
-    const { appContainerOptions, appPortNumber, mesh } = props;
+    const { name, port, containerOptions } = serviceDefinition;
 
-    const taskDefinition = new ecs.FargateTaskDefinition(this, `${serviceName}-task-definition`, {
+    const taskDefinition = new ecs.FargateTaskDefinition(this, `${name}-task-definition`, {
       proxyConfiguration: new ecs.AppMeshProxyConfiguration({
         containerName: 'envoy',
         properties: {
-          appPorts: [appPortNumber],
+          appPorts: [port],
           proxyEgressPort: 15001,
           proxyIngressPort: 15000,
           ignoredUID: 1337,
@@ -112,23 +100,25 @@ export class EcsFargateAppMeshService extends cdk.Construct {
       }),
     });
 
-    const appContainer = taskDefinition.addContainer('app', appContainerOptions);
+    const appContainer = taskDefinition.addContainer('app', containerOptions);
     appContainer.addPortMappings({
-      containerPort: appPortNumber,
-      hostPort: appPortNumber,
+      containerPort: port,
+      hostPort: port,
     });
 
     taskDefinition.addContainer('envoy', {
       image: ecs.ContainerImage.fromRegistry('public.ecr.aws/appmesh/aws-appmesh-envoy:v1.16.1.1-prod'),
       essential: true,
       environment: {
-        APPMESH_VIRTUAL_NODE_NAME: `mesh/${mesh.meshName}/virtualNode/${serviceName}`,
+        // https://docs.aws.amazon.com/app-mesh/latest/userguide/envoy-config.html
+        // APPMESH_VIRTUAL_NODE_NAME - deprecated, see if it can remove
+        APPMESH_VIRTUAL_NODE_NAME: `mesh/${mesh.meshName}/virtualNode/${name}`,
         AWS_REGION: cdk.Stack.of(this).region,
       },
       memoryLimitMiB: 128,
       user: '1337',
       logging: new ecs.AwsLogDriver({
-        streamPrefix: `${serviceName}-envoy`,
+        streamPrefix: `${name}-envoy`,
       }),
     });
 
@@ -142,26 +132,55 @@ export class EcsFargateAppMeshService extends cdk.Construct {
     return appmesh.ServiceDiscovery.cloudMap({ service: appService.cloudMapService });
   }
 
-  private createVirtualNodes(
-    serviceName: string,
+  private createVirtualNode(
+    name: string,
+    appPort: number,
     mesh: appmesh.IMesh,
     serviceDiscovery: appmesh.ServiceDiscovery,
   ) {
-    // TODO: Pass in backend as params to props, ie: virtualNodeBackend: appmesh.VirtualService[]
-    // Also pass in virtual nodes as array, with the backend as props.
-    // Should loop thru array and create fargate service along side it.(one FargateService map to one VirtualNode)
-
-    this.virtualNode = new appmesh.VirtualNode(this, `${serviceName}-virtual-node`, {
+    return new appmesh.VirtualNode(this, `${name}-virtual-node`, {
       mesh,
-      virtualNodeName: serviceName,
+      virtualNodeName: name,
       serviceDiscovery,
-      listeners: [appmesh.VirtualNodeListener.http({ port: 3000 })],
+      listeners: [appmesh.VirtualNodeListener.http({ port: appPort })],
     });
   }
 
-  private createVirtualRouter() {}
+  private createVirtualRouterAndAddRoutes(
+    mesh: appmesh.Mesh,
+    virtualNodes: appmesh.VirtualNode[],
+  ): appmesh.VirtualRouter {
+    const router = new appmesh.VirtualRouter(this, 'router', {
+      mesh,
+      listeners: [appmesh.VirtualRouterListener.http(3000)],
+    });
 
-  private addRoutesToVirtualRouter() {}
+    const avgWeight = 100 / virtualNodes.length;
+    const weightedTargets = virtualNodes.map(node => ({
+      virtualNode: node,
+      weight: avgWeight,
+    }));
 
-  private createVirtualService() {}
+    router.addRoute('route-http', {
+      routeSpec: appmesh.RouteSpec.http({
+        weightedTargets,
+        match: {
+          prefixPath: '/',
+        },
+      }),
+    });
+
+    return router;
+  }
+
+  private createVirtualService(
+    cloudmapNameSpace: string,
+    serviceName: string,
+    virtualRouter: appmesh.VirtualRouter,
+  ): appmesh.VirtualService {
+    return new appmesh.VirtualService(this, `${serviceName}-virtual-service`, {
+      virtualServiceProvider: appmesh.VirtualServiceProvider.virtualRouter(virtualRouter),
+      virtualServiceName: `${serviceName}.${cloudmapNameSpace}`,
+    });
+  }
 }

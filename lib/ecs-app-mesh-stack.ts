@@ -89,58 +89,88 @@ export class GreetingStack extends cdk.Stack {
     const nameService = new EcsFargateAppMeshService(this, 'name', {
       cluster,
       mesh,
-      appPortNumber: 3000,
-      securityGroup,
-      // TODO: this should be an array, add serviceName and backend service as optional too
-      appContainerOptions: {
-        image: ecs.ContainerImage.fromRegistry('nathanpeck/name'),
-        // healthCheck,
-        memoryLimitMiB: 128,
-        logging: new ecs.AwsLogDriver({
-          streamPrefix: 'app-mesh-name',
-        }),
-        environment: {
-          PORT: '3000',
+      fargateServices: [
+        {
+          port: 3000,
+          name: 'name',
+          securityGroup,
+          containerOptions: {
+            image: ecs.ContainerImage.fromRegistry('nathanpeck/name'),
+            // healthCheck,
+            memoryLimitMiB: 128,
+            logging: new ecs.AwsLogDriver({
+              streamPrefix: 'app-mesh-name',
+            }),
+            environment: {
+              PORT: '3000',
+            },
+          },
         },
-      },
+      ],
     });
 
     const greetingService = new EcsFargateAppMeshService(this, 'greeting', {
       cluster,
       mesh,
-      appPortNumber: 3000,
-      securityGroup,
-      appContainerOptions: {
-        image: ecs.ContainerImage.fromRegistry('nathanpeck/greeting'),
-        // healthCheck,
-        memoryLimitMiB: 128,
-        logging: new ecs.AwsLogDriver({
-          streamPrefix: 'app-mesh-greeting',
-        }),
-        environment: {
-          PORT: '3000',
+      fargateServices: [
+        {
+          port: 3000,
+          name: 'greeting',
+          securityGroup,
+          containerOptions: {
+            image: ecs.ContainerImage.fromRegistry('nathanpeck/greeting'),
+            // healthCheck,
+            memoryLimitMiB: 128,
+            logging: new ecs.AwsLogDriver({
+              streamPrefix: 'app-mesh-greeting',
+            }),
+            environment: {
+              PORT: '3000',
+            },
+          },
         },
-      },
+        {
+          port: 3000,
+          name: 'greeting_v2',
+          securityGroup,
+          containerOptions: {
+            image: ecs.ContainerImage.fromRegistry('nathanpeck/name'),
+            // healthCheck,
+            memoryLimitMiB: 128,
+            logging: new ecs.AwsLogDriver({
+              streamPrefix: 'app-mesh-name',
+            }),
+            environment: {
+              PORT: '3000',
+            },
+          },
+        },
+      ],
     });
 
     const greeterService = new EcsFargateAppMeshService(this, 'greeter', {
       cluster,
       mesh,
-      appPortNumber: 3000,
-      securityGroup,
-      appContainerOptions: {
-        image: ecs.ContainerImage.fromRegistry('nathanpeck/greeter'),
-        // healthCheck,
-        memoryLimitMiB: 128,
-        logging: new ecs.AwsLogDriver({
-          streamPrefix: 'app-mesh-greeter',
-        }),
-        environment: {
-          GREETING_URL: 'http://greeting.internal:3000',
-          NAME_URL: 'http://name.internal:3000',
-          PORT: '3000',
+      fargateServices: [
+        {
+          port: 3000,
+          name: 'greeter',
+          securityGroup,
+          containerOptions: {
+            image: ecs.ContainerImage.fromRegistry('nathanpeck/greeter'),
+            // healthCheck,
+            memoryLimitMiB: 128,
+            logging: new ecs.AwsLogDriver({
+              streamPrefix: 'app-mesh-greeter',
+            }),
+            environment: {
+              GREETING_URL: 'http://greeting.internal:3000',
+              NAME_URL: 'http://name.internal:3000',
+              PORT: '3000',
+            },
+          },
         },
-      },
+      ],
     });
 
     greeterService.addBackend(nameService);
@@ -156,7 +186,7 @@ export class GreetingStack extends cdk.Stack {
     const externalListener = externalLB.addListener('PublicListener', { port: 80 });
     externalListener.addTargets('greeter', {
       port: 80,
-      targets: [greeterService.service],
+      targets: [greeterService.fargateServices[0]],
     });
 
     this.externalDNS = new cdk.CfnOutput(this, 'ExternalDNS', {
