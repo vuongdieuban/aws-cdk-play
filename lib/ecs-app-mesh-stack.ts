@@ -6,9 +6,8 @@ import * as elbv2 from '@aws-cdk/aws-elasticloadbalancingv2';
 import * as servicediscovery from '@aws-cdk/aws-servicediscovery';
 import { SecurityGroup, SubnetType } from '@aws-cdk/aws-ec2';
 import { EcsFargateAppMeshService } from './constructs/ecs-fargate-appmesh-service.construct';
-import { HttpAlbIntegration, LambdaProxyIntegration } from '@aws-cdk/aws-apigatewayv2-integrations';
-import { HttpApi, CorsHttpMethod, HttpMethod } from '@aws-cdk/aws-apigatewayv2';
-import { Function as LambdaFunction, Runtime, Code } from '@aws-cdk/aws-lambda';
+import { HttpAlbIntegration } from '@aws-cdk/aws-apigatewayv2-integrations';
+import { HttpApi, CorsHttpMethod } from '@aws-cdk/aws-apigatewayv2';
 
 // ** IMPORTANT: Make sure all package have same version (1.95 across everything, remove the ^ symbol, 1.95.0 !== 1.95.1)
 
@@ -22,7 +21,20 @@ export class GreetingStack extends cdk.Stack {
     // Default Max Availability zone is 3, default to 1 NAT Gateway per Az
     // NAT gateway is charged even if it is not used - expensive
     const vpc = new ec2.Vpc(this, 'GreetingVpc', {
+      cidr: '10.0.0.0/16',
       maxAzs: 2,
+      subnetConfiguration: [
+        {
+          cidrMask: 24,
+          name: 'public',
+          subnetType: SubnetType.PUBLIC,
+        },
+        {
+          cidrMask: 24,
+          name: 'private',
+          subnetType: SubnetType.PRIVATE,
+        },
+      ],
     });
 
     const securityGroup = new SecurityGroup(this, 'ecs-appmesh-sg', {
@@ -31,6 +43,8 @@ export class GreetingStack extends cdk.Stack {
       vpc,
     });
 
+    // allow any ipv4 address (for tighter control, can just allow certain ip addresses)
+    // alternatively, can use Peer.anyIpv4() (same as 0.0.0.0/0)
     securityGroup.addIngressRule(ec2.Peer.ipv4('0.0.0.0/0'), ec2.Port.tcp(3000), 'App Port');
 
     // Create an ECS cluster
@@ -136,9 +150,6 @@ export class GreetingStack extends cdk.Stack {
     const externalLB = new elbv2.ApplicationLoadBalancer(this, 'external', {
       internetFacing: false,
       vpc,
-      vpcSubnets: {
-        subnetType: SubnetType.PRIVATE,
-      },
     });
 
     const externalListener = externalLB.addListener('PublicListener', { port: 80 });
@@ -152,48 +163,20 @@ export class GreetingStack extends cdk.Stack {
       value: externalLB.loadBalancerDnsName,
     });
 
-    // const httpEndpoint = new HttpApi(this, 'HttpApiPrivateItg', {
-    //   defaultIntegration: new HttpAlbIntegration({
-    //     listener: externalListener,
-    //   }),
-    // });
-
-    // this.httpApiGwEndpointsDNS = new cdk.CfnOutput(this, 'HttpApiGwDNS', {
-    //   exportName: 'http-api-dns',
-    //   value: httpEndpoint.url || 'no-url-found',
-    // });
-
-    const greeterHandler = new LambdaFunction(this, 'GreeterHandler', {
-      runtime: Runtime.NODEJS_14_X,
-      code: Code.fromAsset('applications/lambda-handlers/deploy'),
-      handler: 'greeter-handler.greeterHandler',
-      vpc,
-      vpcSubnets: {
-        subnetType: SubnetType.PRIVATE,
-      },
-    });
-
-    const greeterIntegration = new LambdaProxyIntegration({
-      handler: greeterHandler,
-    });
-
-    const httpApi = new HttpApi(this, 'HttpApi', {
+    const httpEndpoint = new HttpApi(this, 'HttpApiPrivateItg', {
       corsPreflight: {
         allowHeaders: ['*'],
         allowMethods: [CorsHttpMethod.GET, CorsHttpMethod.POST, CorsHttpMethod.OPTIONS],
         allowOrigins: ['*'],
       },
+      defaultIntegration: new HttpAlbIntegration({
+        listener: externalListener,
+      }),
     });
 
-    httpApi.addRoutes({
-      path: '/',
-      methods: [HttpMethod.GET],
-      integration: greeterIntegration,
-    });
-
-    new cdk.CfnOutput(this, 'HttpApiGwDns', {
-      exportName: 'http-api-external',
-      value: httpApi.url || 'no-http-url',
+    this.httpApiGwEndpointsDNS = new cdk.CfnOutput(this, 'HttpApiGwDNS', {
+      exportName: 'http-api-dns',
+      value: httpEndpoint.url || 'no-url-found',
     });
   }
 }
