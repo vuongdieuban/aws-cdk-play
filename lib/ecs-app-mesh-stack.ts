@@ -91,6 +91,7 @@ export class GreetingStack extends cdk.Stack {
       mesh,
       appPortNumber: 3000,
       securityGroup,
+      // TODO: this should be an array, add serviceName and backend service as optional too
       appContainerOptions: {
         image: ecs.ContainerImage.fromRegistry('nathanpeck/name'),
         // healthCheck,
@@ -142,8 +143,8 @@ export class GreetingStack extends cdk.Stack {
       },
     });
 
-    greeterService.connectToMeshService(nameService);
-    greeterService.connectToMeshService(greetingService);
+    greeterService.addBackend(nameService);
+    greeterService.addBackend(greetingService);
 
     // Setup an internet facing load balancer for exposing the public facing greeter service to the public.
     // Right now it is set to false because we get traffic from Api Gateway thru VPC Link (ApiGateway directly proxy public traffic to this ALB)
