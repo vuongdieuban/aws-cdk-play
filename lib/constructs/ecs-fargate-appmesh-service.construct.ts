@@ -3,6 +3,7 @@ import * as ecs from '@aws-cdk/aws-ecs';
 import * as ec2 from '@aws-cdk/aws-ec2';
 import * as appmesh from '@aws-cdk/aws-appmesh';
 import { DnsRecordType } from '@aws-cdk/aws-servicediscovery';
+import { PolicyStatement } from '@aws-cdk/aws-iam';
 
 interface FargateServiceDefinition {
   name: string; // name will be used to register with service discovery
@@ -109,6 +110,7 @@ export class EcsFargateAppMeshService extends cdk.Construct {
         // APPMESH_VIRTUAL_NODE_NAME - deprecated, see if it can remove
         APPMESH_VIRTUAL_NODE_NAME: `mesh/${mesh.meshName}/virtualNode/${name}`,
         AWS_REGION: cdk.Stack.of(this).region,
+        ENABLE_ENVOY_XRAY_TRACING: '1',
       },
       memoryLimitMiB: 128,
       user: '1337',
@@ -116,6 +118,32 @@ export class EcsFargateAppMeshService extends cdk.Construct {
         streamPrefix: `${name}-envoy`,
       }),
     });
+
+    const xrayContainer = taskDefinition.addContainer('xray', {
+      image: ecs.ContainerImage.fromRegistry('amazon/aws-xray-daemon'),
+      user: '1337',
+      memoryLimitMiB: 128,
+      essential: true,
+      logging: new ecs.AwsLogDriver({
+        streamPrefix: `${name}-xray`,
+      }),
+    });
+    xrayContainer.addPortMappings({
+      containerPort: 2000,
+      hostPort: 2000,
+      protocol: ecs.Protocol.UDP,
+    });
+
+    taskDefinition.taskRole.addToPrincipalPolicy(
+      new PolicyStatement({
+        resources: ['*'],
+        actions: [
+          'logs:*', // full access to cloudwatch logs
+          'xray:*', // full access xray
+          'appmesh:*', // full access appmesh
+        ],
+      }),
+    );
 
     return taskDefinition;
   }
