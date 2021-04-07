@@ -50,6 +50,7 @@ export class GreetingStack extends cdk.Stack {
     // Create an ECS cluster
     const cluster = new ecs.Cluster(this, 'Cluster', {
       vpc,
+      containerInsights: true,
       defaultCloudMapNamespace: {
         name: 'internal',
         type: servicediscovery.NamespaceType.DNS_PRIVATE,

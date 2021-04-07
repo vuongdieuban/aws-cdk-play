@@ -43,11 +43,6 @@ export class EcsFargateAppMeshService extends cdk.Construct {
     this.virtualService = this.createVirtualService(cloudmapNameSpace, serviceName, virtualRouter);
   }
 
-  // Connect this mesh enabled service to another mesh enabled service.
-  // This adjusts the security groups for both services so that they
-  // can talk to each other. Also adjusts the virtual node for this service
-  // so that its Envoy intercepts traffic that can be handled by the other
-  // service's virtual service.
   public addBackend(backendService: EcsFargateAppMeshService) {
     this.virtualNodes.forEach(node => {
       node.addBackend(appmesh.Backend.virtualService(backendService.virtualService));
