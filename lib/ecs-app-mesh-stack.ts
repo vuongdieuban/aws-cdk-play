@@ -8,7 +8,7 @@ import { Peer, Port, SecurityGroup, SubnetType } from '@aws-cdk/aws-ec2';
 import { EcsFargateAppMeshService } from './constructs/ecs-fargate-appmesh-service.construct';
 import { HttpAlbIntegration, LambdaProxyIntegration } from '@aws-cdk/aws-apigatewayv2-integrations';
 import { CfnOutput } from '@aws-cdk/core';
-import { Function as LambdaFunction, Runtime, Code } from '@aws-cdk/aws-lambda';
+import { Function as LambdaFunction, Runtime, Code, Tracing } from '@aws-cdk/aws-lambda';
 import { HttpApi, CorsHttpMethod, HttpMethod } from '@aws-cdk/aws-apigatewayv2';
 
 // ** IMPORTANT: Make sure all package have same version (1.95 across everything, remove the ^ symbol, 1.95.0 !== 1.95.1)
@@ -214,6 +214,7 @@ export class GreetingStack extends cdk.Stack {
         subnetType: SubnetType.PRIVATE,
       },
       securityGroups: [lambdaSg],
+      tracing: Tracing.ACTIVE, // xray tracing
     });
 
     const helloIntegration = new LambdaProxyIntegration({
