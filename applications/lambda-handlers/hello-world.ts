@@ -3,7 +3,8 @@ import axios from 'axios';
 export const helloHandler = async function (event: any) {
   try {
     console.log('request:', JSON.stringify(event, undefined, 2));
-    const { data } = await axios.get('https://jsonplaceholder.typicode.com/todos/1');
+    const albUrl = 'http://greeting.internal:3000';
+    const { data } = await axios.get(albUrl);
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -11,12 +12,13 @@ export const helloHandler = async function (event: any) {
     };
   } catch (err) {
     console.error('Error', err);
+    const errorResponse = {
+      data: err.message,
+    };
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json' },
-      body: {
-        data: err.message,
-      },
+      body: JSON.stringify(errorResponse),
     };
   }
 };

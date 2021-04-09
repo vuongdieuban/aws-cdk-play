@@ -4,7 +4,7 @@ import * as ec2 from '@aws-cdk/aws-ec2';
 import * as appmesh from '@aws-cdk/aws-appmesh';
 import * as elbv2 from '@aws-cdk/aws-elasticloadbalancingv2';
 import * as servicediscovery from '@aws-cdk/aws-servicediscovery';
-import { SecurityGroup, SubnetType } from '@aws-cdk/aws-ec2';
+import { Peer, Port, SecurityGroup, SubnetType } from '@aws-cdk/aws-ec2';
 import { EcsFargateAppMeshService } from './constructs/ecs-fargate-appmesh-service.construct';
 import { HttpAlbIntegration, LambdaProxyIntegration } from '@aws-cdk/aws-apigatewayv2-integrations';
 import { CfnOutput } from '@aws-cdk/core';
@@ -179,10 +179,10 @@ export class GreetingStack extends cdk.Stack {
     greeterService.addBackend(nameService);
     greeterService.addBackend(greetingService);
 
-    // Setup an internet facing load balancer for exposing the public facing greeter service to the public.
-    // Right now it is set to false because we get traffic from Api Gateway thru VPC Link (ApiGateway directly proxy public traffic to this ALB)
+    // ALB is no longer necessary once we put lambda inside VPC
+    // Lambda can directly invoke internal resources such as http://greeting.internal:3000
     const externalLB = new elbv2.ApplicationLoadBalancer(this, 'external', {
-      internetFacing: false,
+      internetFacing: true,
       vpc,
     });
 
@@ -197,11 +197,23 @@ export class GreetingStack extends cdk.Stack {
       value: externalLB.loadBalancerDnsName,
     });
 
+    const lambdaSg = new SecurityGroup(this, 'lambda-sg', {
+      securityGroupName: 'lambda-web-access',
+      allowAllOutbound: true,
+      vpc,
+    });
+    lambdaSg.addIngressRule(Peer.anyIpv4(), Port.tcp(80), 'http port');
+    lambdaSg.addIngressRule(Peer.anyIpv4(), Port.tcp(443), 'https port');
+
     const helloHandler = new LambdaFunction(this, 'HelloHandler', {
       runtime: Runtime.NODEJS_14_X,
       code: Code.fromAsset('applications/lambda-handlers/deploy'),
       handler: 'hello-world.helloHandler', // hello-world.js file, helloHandler function,
       vpc,
+      vpcSubnets: {
+        subnetType: SubnetType.PRIVATE,
+      },
+      securityGroups: [lambdaSg],
     });
 
     const helloIntegration = new LambdaProxyIntegration({
