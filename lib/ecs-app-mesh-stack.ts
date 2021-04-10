@@ -13,7 +13,7 @@ import { HttpApi, CorsHttpMethod, HttpMethod } from '@aws-cdk/aws-apigatewayv2';
 
 // ** IMPORTANT: Make sure all package have same version (1.95 across everything, remove the ^ symbol, 1.95.0 !== 1.95.1)
 
-export class GreetingStack extends cdk.Stack {
+export class PersonalColorStack extends cdk.Stack {
   public externalDNS: cdk.CfnOutput;
   public httpApiGwEndpointsDNS: cdk.CfnOutput;
 
@@ -22,7 +22,7 @@ export class GreetingStack extends cdk.Stack {
 
     // Default Max Availability zone is 3, default to 1 NAT Gateway per Az
     // NAT gateway is charged even if it is not used - expensive
-    const vpc = new ec2.Vpc(this, 'GreetingVpc', {
+    const vpc = new ec2.Vpc(this, 'personal-color-vpc', {
       cidr: '10.0.0.0/16',
       maxAzs: 2,
       subnetConfiguration: [
@@ -50,7 +50,7 @@ export class GreetingStack extends cdk.Stack {
     securityGroup.addIngressRule(ec2.Peer.ipv4('0.0.0.0/0'), ec2.Port.tcp(3000), 'App Port');
 
     // Create an ECS cluster
-    const cluster = new ecs.Cluster(this, 'Cluster', {
+    const cluster = new ecs.Cluster(this, 'personal-color-cluster', {
       vpc,
       containerInsights: true,
       defaultCloudMapNamespace: {
@@ -60,14 +60,14 @@ export class GreetingStack extends cdk.Stack {
     });
 
     // Create an App Mesh
-    const mesh = new appmesh.Mesh(this, 'app-mesh', {
-      meshName: 'greeting-app-mesh',
+    const mesh = new appmesh.Mesh(this, 'app-mesh-demo', {
+      meshName: 'personal-color-mesh',
     });
 
     // Add capacity/auto-scaling to it
     // This is the default auto scaling group, to create customize one, use autoscaling.AutoScalingGroup (@aws-cdk/aws-autoscalling)
     // cluster.addAutoScalingGroup
-    cluster.addCapacity('greeter-capacity', {
+    cluster.addCapacity('personal-color-capacity', {
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
       minCapacity: 1,
       maxCapacity: 1,
@@ -98,11 +98,11 @@ export class GreetingStack extends cdk.Stack {
           name: 'name',
           securityGroup,
           containerOptions: {
-            image: ecs.ContainerImage.fromRegistry('nathanpeck/name'),
+            image: ecs.ContainerImage.fromRegistry('banvuong/name:demo'),
             // healthCheck,
             memoryLimitMiB: 128,
             logging: new ecs.AwsLogDriver({
-              streamPrefix: 'app-mesh-name',
+              streamPrefix: 'name-log',
             }),
             environment: {
               PORT: '3000',
@@ -112,20 +112,20 @@ export class GreetingStack extends cdk.Stack {
       ],
     });
 
-    const greetingService = new EcsFargateAppMeshService(this, 'greeting', {
+    const colorService = new EcsFargateAppMeshService(this, 'color', {
       cluster,
       mesh,
       fargateServices: [
         {
           port: 3000,
-          name: 'greeting',
+          name: 'color',
           securityGroup,
           containerOptions: {
-            image: ecs.ContainerImage.fromRegistry('nathanpeck/greeting'),
+            image: ecs.ContainerImage.fromRegistry('banvuong/color-v1:demo'),
             // healthCheck,
             memoryLimitMiB: 128,
             logging: new ecs.AwsLogDriver({
-              streamPrefix: 'app-mesh-greeting',
+              streamPrefix: 'color-v1-log',
             }),
             environment: {
               PORT: '3000',
@@ -134,14 +134,14 @@ export class GreetingStack extends cdk.Stack {
         },
         {
           port: 3000,
-          name: 'greeting_v2',
+          name: 'color-v2',
           securityGroup,
           containerOptions: {
-            image: ecs.ContainerImage.fromRegistry('nathanpeck/name'),
+            image: ecs.ContainerImage.fromRegistry('banvuong/color-v2:demo'),
             // healthCheck,
             memoryLimitMiB: 128,
             logging: new ecs.AwsLogDriver({
-              streamPrefix: 'app-mesh-name',
+              streamPrefix: 'color-v2-log',
             }),
             environment: {
               PORT: '3000',
@@ -151,24 +151,24 @@ export class GreetingStack extends cdk.Stack {
       ],
     });
 
-    const greeterService = new EcsFargateAppMeshService(this, 'greeter', {
+    const personalColorService = new EcsFargateAppMeshService(this, 'personal-color', {
       cluster,
       mesh,
       fargateServices: [
         {
           port: 3000,
-          name: 'greeter',
+          name: 'personal-color',
           securityGroup,
           containerOptions: {
-            image: ecs.ContainerImage.fromRegistry('nathanpeck/greeter'),
+            image: ecs.ContainerImage.fromRegistry('banvuong/personal-color:demo'),
             // healthCheck,
             memoryLimitMiB: 128,
             logging: new ecs.AwsLogDriver({
-              streamPrefix: 'app-mesh-greeter',
+              streamPrefix: 'personal-color-log',
             }),
             environment: {
-              GREETING_URL: 'http://greeting.internal:3000',
               NAME_URL: 'http://name.internal:3000',
+              COLOR_URL: 'http://color.internal:3000',
               PORT: '3000',
             },
           },
@@ -176,8 +176,8 @@ export class GreetingStack extends cdk.Stack {
       ],
     });
 
-    greeterService.addBackend(nameService);
-    greeterService.addBackend(greetingService);
+    personalColorService.addBackend(nameService);
+    personalColorService.addBackend(colorService);
 
     // ALB is no longer necessary once we put lambda inside VPC
     // Lambda can directly invoke internal resources such as http://greeting.internal:3000
@@ -189,7 +189,7 @@ export class GreetingStack extends cdk.Stack {
     const externalListener = externalLB.addListener('PublicListener', { port: 80 });
     externalListener.addTargets('greeter', {
       port: 80,
-      targets: [greeterService.fargateServices[0]],
+      targets: [personalColorService.fargateServices[0]],
     });
 
     this.externalDNS = new cdk.CfnOutput(this, 'ExternalDNS', {
@@ -215,6 +215,9 @@ export class GreetingStack extends cdk.Stack {
       },
       securityGroups: [lambdaSg],
       tracing: Tracing.ACTIVE, // xray tracing
+      environment: {
+        PERSONAL_COLOR_URL: 'http://personal-color.internal:3000',
+      },
     });
 
     const helloIntegration = new LambdaProxyIntegration({

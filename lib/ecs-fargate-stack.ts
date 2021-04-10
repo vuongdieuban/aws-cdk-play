@@ -14,7 +14,7 @@ export class EcsFargateStack extends Stack {
     });
 
     // If pull from upstream dockerhub or ecr, use ContainerImage.fromRegistry
-    const dockerImage = new AssetImage(__dirname + '/../applications/nodejs-app');
+    const dockerImage = new AssetImage(__dirname + '/../applications/nodejs-apps/color-v1');
     const container = taskDefinition.addContainer('WebServer', { image: dockerImage });
     container.addPortMappings({ containerPort: 3000 });
 

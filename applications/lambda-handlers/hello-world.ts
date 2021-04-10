@@ -3,14 +3,24 @@ import axios from 'axios';
 export const helloHandler = async function (event: any) {
   try {
     console.log('request:', JSON.stringify(event, undefined, 2));
-    const internalDataPromise = axios.get('http://greeter.internal:3000');
+    const internalUrl = process.env.PERSONAL_COLOR_URL;
+    if (!internalUrl) {
+      throw new Error('Missing internal resource url');
+    }
+
+    const internalDataPromise = axios.get(internalUrl);
     const externalDataPromise = axios.get('https://jsonplaceholder.typicode.com/todos/1');
 
-    const [internalData, externalData] = await Promise.all([internalDataPromise, externalDataPromise]);
+    const [{ data: internalData }, { data: externalData }] = await Promise.all([
+      internalDataPromise,
+      externalDataPromise,
+    ]);
+
     const response = {
       internalData,
       externalData,
     };
+
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
