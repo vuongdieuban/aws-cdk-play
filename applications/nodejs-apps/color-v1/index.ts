@@ -5,8 +5,16 @@ const app = express();
 const PORT = 3000;
 const HOST = '0.0.0.0';
 
+const generateRandomNumer = (max: number) => {
+  return Math.floor(Math.random() * max);
+};
+
+const colors = ['red', 'blue', 'green', 'black'];
+
 app.get('/', (req, res) => {
-  res.send('hello world from express app');
+  const colorIndex = generateRandomNumer(colors.length);
+  const chosenColor = colors[colorIndex];
+  res.send(chosenColor);
 });
 
 app.listen(PORT, HOST);
