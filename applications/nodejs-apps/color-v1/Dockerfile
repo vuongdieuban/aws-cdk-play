@@ -1,6 +1,6 @@
-FROM node:14
+FROM node:14-alpine
 
-WORKDIR /usr/src/app
+ENV NODE_VERSION 14.16.1
 
 COPY package*.json ./
 
