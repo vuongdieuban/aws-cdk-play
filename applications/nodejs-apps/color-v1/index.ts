@@ -14,7 +14,10 @@ const colors = ['red', 'blue', 'green', 'black'];
 app.get('/', (req, res) => {
   const colorIndex = generateRandomNumer(colors.length);
   const chosenColor = colors[colorIndex];
-  res.send(chosenColor);
+  res.json({
+    color: chosenColor,
+    version: 'v1',
+  });
 });
 
 app.listen(PORT, HOST);
