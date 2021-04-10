@@ -30,12 +30,12 @@ app.get('/', async (req, res) => {
 
   const [{ data: nameData }, { data: colorData }] = await Promise.all([namePromise, colorPromise]);
 
-  const favoriteColor = `${nameData.name} likes ${colorData.color}`;
+  const personalColor = `${nameData.name} likes ${colorData.color}`;
 
   res.json({
     colorData,
     nameData,
-    favoriteColor,
+    personalColor,
   });
 });
 
