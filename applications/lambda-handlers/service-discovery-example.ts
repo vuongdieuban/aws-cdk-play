@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { ServiceDiscovery, DiscoverInstancesCommand } from '@aws-sdk/client-servicediscovery';
 
-export const greeterHandler = async function (event: any) {
+export const serviceDiscoveryExample = async function (event: any) {
   try {
     // const discoverInstanceCommand = new DiscoverInstancesCommand({
     //   NamespaceName: 'internal',

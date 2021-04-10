@@ -1,3 +1,2 @@
-import { greeterHandler } from './greeter-handler';
-
-export { greeterHandler };
+export * from './service-discovery-example';
+export * from './hello-world';
