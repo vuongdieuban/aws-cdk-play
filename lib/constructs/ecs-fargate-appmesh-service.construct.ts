@@ -4,6 +4,7 @@ import * as ec2 from '@aws-cdk/aws-ec2';
 import * as appmesh from '@aws-cdk/aws-appmesh';
 import { DnsRecordType } from '@aws-cdk/aws-servicediscovery';
 import { PolicyStatement } from '@aws-cdk/aws-iam';
+import { VirtualService } from '@aws-cdk/aws-appmesh';
 
 interface FargateServiceDefinition {
   name: string; // name will be used to register with service discovery
@@ -44,9 +45,9 @@ export class EcsFargateAppMeshService extends cdk.Construct {
     this.virtualService = this.createVirtualService(cloudmapNameSpace, serviceName, virtualRouter);
   }
 
-  public addBackend(backendService: EcsFargateAppMeshService) {
+  public addBackend(backendService: VirtualService) {
     this.virtualNodes.forEach(node => {
-      node.addBackend(appmesh.Backend.virtualService(backendService.virtualService));
+      node.addBackend(appmesh.Backend.virtualService(backendService));
     });
   }
 

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const helloHandler = async function (event: any) {
+export const personalColorHandler = async function (event: any) {
   try {
     console.log('request:', JSON.stringify(event, undefined, 2));
     const internalUrl = process.env.PERSONAL_COLOR_URL;

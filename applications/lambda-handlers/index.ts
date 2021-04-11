@@ -1,2 +1,2 @@
 export * from './service-discovery-example';
-export * from './hello-world';
+export * from './personal-color';
