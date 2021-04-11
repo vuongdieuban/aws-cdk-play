@@ -73,18 +73,27 @@ export class ApiGatewayLambdaStack extends Stack {
       integration: lambdaIntegration,
     });
 
-    new CfnOutput(this, 'RestApi', {
-      exportName: 'rest-api-dns',
+    new CfnOutput(this, 'LambdaProxyApiGw', {
+      exportName: 'lambda-proxy-apigw',
       value: httpApi.url || 'no-url-found',
     });
+
+    return httpApi;
   }
 
   private createHttpProxyPrivateApiGateway(listener: IApplicationListener) {
     // Use VPC to proxy proxy all request into Private ALB (ALB in VPC)
-    return new HttpApi(this, 'HttpProxyPrivateApi', {
+    const httpApi = new HttpApi(this, 'HttpProxyPrivateApi', {
       defaultIntegration: new HttpAlbIntegration({
         listener,
       }),
     });
+
+    new CfnOutput(this, 'PrivateAlbProxyApiGw', {
+      exportName: 'private-alb-proxy-apigw',
+      value: httpApi.url || 'no-url-found',
+    });
+
+    return httpApi;
   }
 }

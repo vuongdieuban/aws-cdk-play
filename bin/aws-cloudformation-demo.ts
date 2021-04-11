@@ -5,6 +5,8 @@ import { ApiGatewayLambdaStack } from '../lib/apigw-lambda-stack';
 import { EcsFargateStack } from '../lib/ecs-fargate-stack';
 import { VpcStack } from '../lib/vpc-stack';
 
+// NOTE: to deploy all and no approval prompt - cdk deploy --required-approval never --all (useful to pipeline)
+
 // To deploy stack together, put stage into Stage (Stage construct aws cdk)
 // Stage could be Staging, Production,....
 // each stage can consist of different stack.
