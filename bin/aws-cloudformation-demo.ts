@@ -9,7 +9,7 @@ import { VpcStack } from '../lib/vpc-stack';
 
 // To deploy stack together, put stage into Stage (Stage construct aws cdk)
 // Stage could be Staging, Production,....
-// each stage can consist of different stack.
+// each stage can consist of different stacks.
 const app = new cdk.App();
 
 const vpcStack = new VpcStack(app, 'VpcStack');

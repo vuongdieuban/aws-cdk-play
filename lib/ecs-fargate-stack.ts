@@ -35,7 +35,7 @@ export class EcsFargateStack extends Stack {
 
     // SplunkLogDriver - sends log to splunk (need Splunk auth token)
     // Right now we log to a file system inside the container, but we cannot ssh into that container to get the file
-    // Might as well log directly to splunk
+    // Might as well use AWS Splunk Log Driver and let AWS manage the splunk log
 
     const nameService = this.createNameService(ecsCluster, serviceMesh, internalSecurityGroup);
 
