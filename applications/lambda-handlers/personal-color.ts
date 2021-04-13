@@ -9,7 +9,7 @@ export const personalColorHandler = async function (event: any) {
     }
 
     const internalDataPromise = axios.get(internalUrl);
-    const externalDataPromise = axios.get('https://jsonplaceholder.typicode.com/todos/1');
+    const externalDataPromise = axios.get('https://api.ipify.org?format=json');
 
     const [{ data: internalData }, { data: externalData }] = await Promise.all([
       internalDataPromise,
