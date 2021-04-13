@@ -8,6 +8,12 @@ import { ApplicationLoadBalancer, IApplicationListener } from '@aws-cdk/aws-elas
 
 // ** IMPORTANT: Make sure all package have same version (1.95 across everything, remove the ^ symbol, 1.95.0 !== 1.95.1)
 
+// NOTE:  Deploy in pipeline
+// We could create an ecr, then when application code changes, build and publish the docker image to ecr with a new tag name/version
+// then in the pipeline, add an env for the new image tag name, this code here will read the tag name from env
+// since the new tag name version is different than the deployed one, this code will run again to deploy new image.
+// We can just git clone this repo in the pipeline when needed
+
 interface EcsFargateStackProps extends StackProps {
   vpc: Vpc;
 }
@@ -27,15 +33,6 @@ export class EcsFargateStack extends Stack {
     const ecsCluster = this.createEcsCluster(vpc);
     const serviceMesh = this.createAppMesh();
     const healthCheck = this.createGenericApplicationHealthCheck();
-
-    // We could create an ecr, then when application code changes, build and publish the docker image to ecr with a new tag name/version
-    // then in the pipeline, add an env for the new image tag name, this code here will read the tag name from env
-    // since the new tag name version is different than the deployed one, this code will run again to deploy new image.
-    // We can just git clone this repo in the pipeline when needed
-
-    // SplunkLogDriver - sends log to splunk (need Splunk auth token)
-    // Right now we log to a file system inside the container, but we cannot ssh into that container to get the file
-    // Might as well use AWS Splunk Log Driver and let AWS manage the splunk log
 
     const nameService = this.createNameService(ecsCluster, serviceMesh, internalSecurityGroup);
 
@@ -129,6 +126,10 @@ export class EcsFargateStack extends Stack {
   }
 
   private createNameService(cluster: Cluster, mesh: Mesh, securityGroup: SecurityGroup) {
+    // SplunkLogDriver - sends log to splunk (need Splunk auth token)
+    // Right now we log to a file system inside the container, but we cannot ssh into that container to get the file
+    // Might as well use AWS Splunk Log Driver and let AWS manage the splunk log
+
     return new EcsFargateAppMeshService(this, 'name', {
       cluster,
       mesh,

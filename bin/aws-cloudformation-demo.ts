@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import * as cdk from '@aws-cdk/core';
 import { ApiGatewayLambdaStack } from '../lib/apigw-lambda-stack';
+import { AwsRegion } from '../lib/constants/aws-region.enum';
 
 import { EcsFargateStack } from '../lib/ecs-fargate-stack';
 import { VpcStack } from '../lib/vpc-stack';
@@ -10,15 +11,27 @@ import { VpcStack } from '../lib/vpc-stack';
 // To deploy stack together, put stage into Stage (Stage construct aws cdk)
 // Stage could be Staging, Production,....
 // each stage can consist of different stacks.
+
+const env = {
+  region: AwsRegion.CA_CENTRAL_1,
+};
+
 const app = new cdk.App();
 
-const vpcStack = new VpcStack(app, 'VpcStack');
+const vpcStack = new VpcStack(app, 'VpcStack', {
+  env,
+});
+
 const { vpc } = vpcStack;
 
-const ecsStack = new EcsFargateStack(app, 'EcsFargateStack', { vpc });
+const ecsStack = new EcsFargateStack(app, 'EcsFargateStack', {
+  vpc,
+  env,
+});
 const { applicationListener } = ecsStack;
 
 const apigwLambdaStack = new ApiGatewayLambdaStack(app, 'ApiGatewayLambdaStack', {
   vpc,
   applicationListener,
+  env,
 });
