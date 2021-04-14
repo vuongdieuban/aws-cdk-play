@@ -21,7 +21,6 @@ const app = new cdk.App();
 const vpcStack = new VpcStack(app, 'VpcStack', {
   env,
 });
-
 const { vpc } = vpcStack;
 
 const ecsStack = new EcsFargateStack(app, 'EcsFargateStack', {
