@@ -14,6 +14,21 @@ import { ApplicationLoadBalancer, IApplicationListener } from '@aws-cdk/aws-elas
 // since the new tag name version is different than the deployed one, this code will run again to deploy new image.
 // We can just git clone this repo in the pipeline when needed
 
+// NOTE: Deploy only one ecs service
+// There are 2 ways
+// First way is to create a ecs task def json file to just update one sevice in that service repo
+// When deploy, use the task def json and it will only update 1 service
+
+// Second way is to use aws cli to list all the task def in pipeline
+// aws ecs describe-task-definition --task-definition (Or any other way to get the image info)
+// We can get all the running task info, it gives the container image
+// Let say we want to deploy rates but want to keep transaction the same
+// From the ecs task def info, we can get the current transaction image
+// Export the transaction image to env, cdk will read it and see that it is the same as the one that is currently running
+// and it won't deploy again
+// As for rates, we have built and deploy to ECR with a new name, so we can just export the new name as env
+// CDK will notice that this is a new image name and will only deploy rates again.
+
 interface EcsFargateStackProps extends StackProps {
   vpc: Vpc;
 }
