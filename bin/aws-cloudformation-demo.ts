@@ -25,16 +25,16 @@ const vpcStack = new VpcStack(app, 'VpcStack', {
 const { vpc } = vpcStack;
 
 // With AppMesh
-// const ecsStack = new EcsFargateAppMeshStack(app, 'EcsFargateAppMeshStack', {
-//   vpc,
-//   env,
-// });
-
-// Without AppMesh
-const ecsStack = new EcsFargateStack(app, 'EcsFargateStack', {
+const ecsStack = new EcsFargateAppMeshStack(app, 'EcsFargateAppMeshStack', {
   vpc,
   env,
 });
+
+// Without AppMesh
+// const ecsStack = new EcsFargateStack(app, 'EcsFargateStack', {
+//   vpc,
+//   env,
+// });
 const { applicationListener } = ecsStack;
 
 const apigwLambdaStack = new ApiGatewayLambdaStack(app, 'ApiGatewayLambdaStack', {
