@@ -33,7 +33,7 @@ interface EcsFargateStackProps extends StackProps {
   vpc: Vpc;
 }
 
-export class EcsFargateStack extends Stack {
+export class EcsFargateAppMeshStack extends Stack {
   public applicationListener: IApplicationListener;
   public externalDNS: CfnOutput;
   public httpApiGwEndpointsDNS: CfnOutput;

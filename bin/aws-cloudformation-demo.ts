@@ -3,7 +3,7 @@ import * as cdk from '@aws-cdk/core';
 import { ApiGatewayLambdaStack } from '../lib/apigw-lambda-stack';
 import { AwsRegion } from '../lib/constants/aws-region.enum';
 
-import { EcsFargateStack } from '../lib/ecs-fargate-stack';
+import { EcsFargateAppMeshStack } from '../lib/ecs-fargate-appmesh-stack';
 import { VpcStack } from '../lib/vpc-stack';
 
 // NOTE: to deploy all and no approval prompt - cdk deploy --require-approval never --all (useful to pipeline)
@@ -23,7 +23,7 @@ const vpcStack = new VpcStack(app, 'VpcStack', {
 });
 const { vpc } = vpcStack;
 
-const ecsStack = new EcsFargateStack(app, 'EcsFargateStack', {
+const ecsStack = new EcsFargateAppMeshStack(app, 'EcsFargateAppMeshStack', {
   vpc,
   env,
 });
