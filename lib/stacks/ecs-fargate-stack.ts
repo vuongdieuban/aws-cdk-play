@@ -3,7 +3,7 @@ import { App, CfnOutput, Stack, StackProps } from '@aws-cdk/core';
 import { Cluster, ContainerImage, AwsLogDriver, FargateService } from '@aws-cdk/aws-ecs';
 import { NamespaceType } from '@aws-cdk/aws-servicediscovery';
 import { ApplicationLoadBalancer, IApplicationListener } from '@aws-cdk/aws-elasticloadbalancingv2';
-import { EcsFargateService } from './constructs/ecs-fargate-service.construct';
+import { EcsFargateService } from '../constructs/ecs-fargate-service.construct';
 
 interface EcsFargateStackProps extends StackProps {
   vpc: Vpc;

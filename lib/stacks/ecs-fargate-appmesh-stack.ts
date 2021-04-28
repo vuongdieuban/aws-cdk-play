@@ -1,10 +1,10 @@
 import { InstanceClass, InstanceSize, InstanceType, Peer, Port, SecurityGroup, Vpc } from '@aws-cdk/aws-ec2';
-import { EcsFargateAppMeshService } from './constructs/ecs-fargate-appmesh-service.construct';
 import { App, CfnOutput, Duration, Stack, StackProps } from '@aws-cdk/core';
 import { Cluster, ContainerImage, AwsLogDriver, FargateService, HealthCheck } from '@aws-cdk/aws-ecs';
 import { Mesh, VirtualService } from '@aws-cdk/aws-appmesh';
 import { NamespaceType } from '@aws-cdk/aws-servicediscovery';
 import { ApplicationLoadBalancer, IApplicationListener } from '@aws-cdk/aws-elasticloadbalancingv2';
+import { EcsFargateAppMeshService } from '../constructs/ecs-fargate-appmesh-service.construct';
 
 // ** IMPORTANT: Make sure all package have same version (1.95 across everything, remove the ^ symbol, 1.95.0 !== 1.95.1)
 

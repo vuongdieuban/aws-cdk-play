@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 import * as cdk from '@aws-cdk/core';
-import { ApiGatewayLambdaStack } from '../lib/apigw-lambda-stack';
+import { ApiGatewayLambdaStack } from '../lib/stacks/apigw-lambda-stack';
 import { AwsRegion } from '../lib/constants/aws-region.enum';
 
-import { EcsFargateAppMeshStack } from '../lib/ecs-fargate-appmesh-stack';
-import { EcsFargateStack } from '../lib/ecs-fargate-stack';
-import { VpcStack } from '../lib/vpc-stack';
+import { EcsFargateAppMeshStack } from '../lib/stacks/ecs-fargate-appmesh-stack';
+import { EcsFargateStack } from '../lib/stacks/ecs-fargate-stack';
+import { RdsAuroraStack } from '../lib/stacks/rds-aurora-stack';
+import { VpcStack } from '../lib/stacks/vpc-stack';
 
 // NOTE: to deploy all and no approval prompt - cdk deploy --require-approval never --all (useful to pipeline)
 
@@ -13,18 +14,18 @@ import { VpcStack } from '../lib/vpc-stack';
 // Stage could be Staging, Production,....
 // each stage can consist of different stacks.
 
+const app = new cdk.App();
+
 const env = {
   region: AwsRegion.CA_CENTRAL_1,
 };
-
-const app = new cdk.App();
 
 const vpcStack = new VpcStack(app, 'VpcStack', {
   env,
 });
 const { vpc } = vpcStack;
 
-// With AppMesh
+// // With AppMesh
 const ecsStack = new EcsFargateAppMeshStack(app, 'EcsFargateAppMeshStack', {
   vpc,
   env,
@@ -42,3 +43,5 @@ const apigwLambdaStack = new ApiGatewayLambdaStack(app, 'ApiGatewayLambdaStack',
   applicationListener,
   env,
 });
+
+const rdsAuroraStack = new RdsAuroraStack(app, 'RdsAuroraStack', { vpc, env });
