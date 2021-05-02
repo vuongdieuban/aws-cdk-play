@@ -25,7 +25,7 @@ const vpcStack = new VpcStack(app, 'VpcStack', {
 });
 const { vpc } = vpcStack;
 
-// // With AppMesh
+// With AppMesh
 const ecsStack = new EcsFargateAppMeshStack(app, 'EcsFargateAppMeshStack', {
   vpc,
   env,
