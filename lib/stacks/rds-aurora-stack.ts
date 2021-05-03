@@ -45,7 +45,6 @@ export class RdsAuroraStack extends Stack {
 
     securityGroup.addIngressRule(Peer.anyIpv4(), Port.tcp(22), 'Allows SSH access from Internet');
 
-    // Finally lets provision our ec2 instance
     const instance = new Instance(this, 'simple-instance', {
       vpc,
       securityGroup,
