@@ -17,9 +17,9 @@ const env: Environment = {
   account: process.env.CDK_DEFAULT_ACCOUNT,
 };
 
-new VpcWithEcsClusterStack(app, 'VpcWithEcsClusterStack', { env });
-new ImportExistedResourcesDemo(app, 'ImportExistedResourcesDemo', { env });
+// new VpcWithEcsClusterStack(app, 'VpcWithEcsClusterStack', { env });
+// new ImportExistedResourcesDemo(app, 'ImportExistedResourcesDemo', { env });
 
-// new MicroServicesWithEcsAndAppMesh(app, 'MicroServicesWithEcsAndAppMesh', { env });
+new MicroServicesWithEcsAndAppMesh(app, 'MicroServicesWithEcsAndAppMesh', { env });
 // new MicroServicesWithEcsFargate(app, 'MicroServicesWithEcsFargate', { env });
 // new AuroraServerlessDatabaseDemo(app, 'AuroraServerlessDatabaseDemo', { env });

@@ -1,11 +1,11 @@
 import { Vpc, SubnetType } from '@aws-cdk/aws-ec2';
-import { App, Stack, StackProps } from '@aws-cdk/core';
+import { Construct } from '@aws-cdk/core';
 
-export class VpcStack extends Stack {
+export class AppVpc extends Construct {
   public vpc: Vpc;
 
-  constructor(scope: App, id: string, props?: StackProps) {
-    super(scope, id, props);
+  constructor(scope: Construct, id: string) {
+    super(scope, id);
 
     // Default Max Availability zone is 3, default to 1 NAT Gateway per Az
     // NAT gateway is charged even if it is not used - expensive

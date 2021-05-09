@@ -1,29 +1,23 @@
 import { App, Stack, StackProps } from '@aws-cdk/core';
-import { ApiGatewayLambdaStack } from '../stacks/apigw-lambda-stack';
-import { EcsFargateAppMeshStack } from '../stacks/ecs-fargate-appmesh-stack';
-import { VpcStack } from '../stacks/vpc-stack';
+import { AppApiGatewayLambda } from '../stacks/app-apigw-lambda';
+import { AppFargateClusterWithServiceMesh } from '../stacks/app-fargate-cluster-servicemesh';
+import { AppVpc } from '../stacks/vpc-stack';
 
 export class MicroServicesWithEcsAndAppMesh extends Stack {
   constructor(scope: App, id: string, props: StackProps) {
     super(scope, id, props);
 
-    const { env } = props;
+    const appVpc = new AppVpc(this, 'AppVpc');
+    const { vpc } = appVpc;
 
-    const vpcStack = new VpcStack(scope, 'VpcStack', {
-      env,
-    });
-    const { vpc } = vpcStack;
-
-    const ecsStack = new EcsFargateAppMeshStack(scope, 'EcsFargateAppMeshStack', {
+    const fargateCluster = new AppFargateClusterWithServiceMesh(this, 'AppFargateClusterWithServiceMesh', {
       vpc,
-      env,
     });
-    const { applicationListener } = ecsStack;
+    const { applicationListener } = fargateCluster;
 
-    const apigwLambdaStack = new ApiGatewayLambdaStack(scope, 'ApiGatewayLambdaStack', {
+    new AppApiGatewayLambda(this, 'AppApiGatewayLambda', {
       vpc,
       applicationListener,
-      env,
     });
   }
 }

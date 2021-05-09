@@ -1,18 +1,18 @@
 import { HttpAlbIntegration, LambdaProxyIntegration } from '@aws-cdk/aws-apigatewayv2-integrations';
 import { Peer, Port, SecurityGroup, SubnetType, Vpc } from '@aws-cdk/aws-ec2';
 import { Runtime, Code, Tracing, Function as LambdaFunction } from '@aws-cdk/aws-lambda';
-import { App, CfnOutput, Stack, StackProps } from '@aws-cdk/core';
+import { CfnOutput, Construct } from '@aws-cdk/core';
 import { HttpApi, CorsHttpMethod, HttpMethod } from '@aws-cdk/aws-apigatewayv2';
 import { IApplicationListener } from '@aws-cdk/aws-elasticloadbalancingv2';
 
-interface ApiGatewayLambdaStackProps extends StackProps {
+interface Props {
   vpc: Vpc;
   applicationListener: IApplicationListener;
 }
 
-export class ApiGatewayLambdaStack extends Stack {
-  constructor(scope: App, id: string, props: ApiGatewayLambdaStackProps) {
-    super(scope, id, props);
+export class AppApiGatewayLambda extends Construct {
+  constructor(scope: Construct, id: string, props: Props) {
+    super(scope, id);
     const { vpc, applicationListener } = props;
 
     const webfacingSecurityGroup = this.createWebFacingSecurityGroup(vpc);
