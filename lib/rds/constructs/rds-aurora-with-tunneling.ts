@@ -1,4 +1,4 @@
-import { App, CfnOutput, SecretValue, Stack, StackProps } from '@aws-cdk/core';
+import { CfnOutput, Construct, SecretValue, Stack } from '@aws-cdk/core';
 import {
   AmazonLinuxGeneration,
   Instance,
@@ -19,7 +19,7 @@ import {
   ServerlessCluster,
 } from '@aws-cdk/aws-rds';
 
-export interface RdsAuroraStackProps extends StackProps {
+export interface Props {
   vpc: Vpc;
 }
 
@@ -28,9 +28,9 @@ export interface RdsAuroraStackProps extends StackProps {
 // Access to localhost:5432 in Dbeaver or typeorm will directly connect to the aurora serverless db
 // Refer to setupEc2Host() function to see comment about the key pair file
 
-export class RdsAuroraStack extends Stack {
-  constructor(scope: App, id: string, props: RdsAuroraStackProps) {
-    super(scope, id, props);
+export class RdsAuroraWithTunneling extends Construct {
+  constructor(scope: Construct, id: string, props: Props) {
+    super(scope, id);
     const { vpc } = props;
     this.setupEc2Host(vpc);
     this.setupServerlessDbCluster(vpc);

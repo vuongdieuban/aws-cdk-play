@@ -1,47 +1,24 @@
 import { InstanceClass, InstanceSize, InstanceType, Peer, Port, SecurityGroup, Vpc } from '@aws-cdk/aws-ec2';
-import { App, CfnOutput, Duration, Stack, StackProps } from '@aws-cdk/core';
+import { CfnOutput, Construct, Duration } from '@aws-cdk/core';
 import { Cluster, ContainerImage, AwsLogDriver, FargateService, HealthCheck } from '@aws-cdk/aws-ecs';
 import { Mesh, VirtualService } from '@aws-cdk/aws-appmesh';
 import { NamespaceType } from '@aws-cdk/aws-servicediscovery';
 import { ApplicationLoadBalancer, IApplicationListener } from '@aws-cdk/aws-elasticloadbalancingv2';
-import { EcsFargateAppMeshService } from '../constructs/ecs-fargate-appmesh-service.construct';
+import { EcsFargateAppMeshService } from '../../shared-resources/ecs-fargate-appmesh-service';
 
-// ** IMPORTANT: Make sure all package have same version (1.95 across everything, remove the ^ symbol, 1.95.0 !== 1.95.1)
-
-// NOTE:  Deploy in pipeline
-// We could create an ecr, then when application code changes, build and publish the docker image to ecr with a new tag name/version
-// then in the pipeline, add an env for the new image tag name, this code here will read the tag name from env
-// since the new tag name version is different than the deployed one, this code will run again to deploy new image.
-// We can just git clone this repo in the pipeline when needed
-
-// NOTE: Deploy only one ecs service
-// There are 2 ways
-// First way is to create a ecs task def json file to just update one sevice in that service repo
-// When deploy, use the task def json and it will only update 1 service
-
-// Second way is to use aws cli to list all the task def in pipeline
-// aws ecs describe-task-definition --task-definition (Or any other way to get the image info)
-// We can get all the running task info, it gives the container image
-// Let say we want to deploy rates but want to keep transaction the same
-// From the ecs task def info, we can get the current transaction image
-// Export the transaction image to env, cdk will read it and see that it is the same as the one that is currently running
-// and it won't deploy again
-// As for rates, we have built and deploy to ECR with a new name, so we can just export the new name as env
-// CDK will notice that this is a new image name and will only deploy rates again.
-
-interface EcsFargateStackProps extends StackProps {
+interface Props {
   vpc: Vpc;
 }
 
-export class EcsFargateAppMeshStack extends Stack {
+export class AppFargateClusterWithServiceMesh extends Construct {
   public applicationListener: IApplicationListener;
   public externalDNS: CfnOutput;
   public httpApiGwEndpointsDNS: CfnOutput;
 
   private readonly privateCloudMapNamespace = 'internal'; // personal-color.internal:3000
 
-  constructor(scope: App, id: string, props: EcsFargateStackProps) {
-    super(scope, id, props);
+  constructor(scope: Construct, id: string, props: Props) {
+    super(scope, id);
     const { vpc } = props;
 
     const internalSecurityGroup = this.createInternalSecurityGroup(vpc);

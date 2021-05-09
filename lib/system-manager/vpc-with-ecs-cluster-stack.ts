@@ -1,20 +1,18 @@
 import { Vpc } from '@aws-cdk/aws-ec2';
 import { Cluster } from '@aws-cdk/aws-ecs';
 import { NamespaceType } from '@aws-cdk/aws-servicediscovery';
-import { App, Stack, StackProps } from '@aws-cdk/core';
-import { VpcStack } from './vpc-stack';
+import { Construct, Stack } from '@aws-cdk/core';
+import { AppVpc } from '../shared-resources/app-vpc';
 
 export class VpcWithEcsClusterStack extends Stack {
   public vpc: Vpc;
   public ecsCluster: Cluster;
   private readonly privateCloudMapNamespace = 'internal';
 
-  constructor(scope: App, id: string, props: StackProps) {
-    super(scope, id, props);
+  constructor(scope: Construct, id: string) {
+    super(scope, id);
 
-    const { vpc } = new VpcStack(scope, 'DemoVpc', {
-      env: props.env,
-    });
+    const { vpc } = new AppVpc(scope, 'DemoVpc');
 
     const cluster = new Cluster(this, 'DemoCluster', {
       vpc,

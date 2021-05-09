@@ -1,23 +1,23 @@
 import { InstanceClass, InstanceSize, InstanceType, Peer, Port, SecurityGroup, Vpc } from '@aws-cdk/aws-ec2';
-import { App, CfnOutput, Stack, StackProps } from '@aws-cdk/core';
+import { App, CfnOutput, Construct, Stack } from '@aws-cdk/core';
 import { Cluster, ContainerImage, AwsLogDriver, FargateService } from '@aws-cdk/aws-ecs';
 import { NamespaceType } from '@aws-cdk/aws-servicediscovery';
 import { ApplicationLoadBalancer, IApplicationListener } from '@aws-cdk/aws-elasticloadbalancingv2';
-import { EcsFargateService } from '../constructs/ecs-fargate-service.construct';
+import { EcsFargateService } from '../../shared-resources/ecs-fargate-service';
 
-interface EcsFargateStackProps extends StackProps {
+interface Props {
   vpc: Vpc;
 }
 
-export class EcsFargateStack extends Stack {
+export class AppFargateCluster extends Construct {
   public applicationListener: IApplicationListener;
   public externalDNS: CfnOutput;
   public httpApiGwEndpointsDNS: CfnOutput;
 
   private readonly privateCloudMapNamespace = 'internal'; // personal-color.internal:3000
 
-  constructor(scope: App, id: string, props: EcsFargateStackProps) {
-    super(scope, id, props);
+  constructor(scope: Construct, id: string, props: Props) {
+    super(scope, id);
     const { vpc } = props;
 
     const internalSecurityGroup = this.createInternalSecurityGroup(vpc);
