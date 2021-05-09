@@ -28,7 +28,7 @@ export interface Props {
 // Access to localhost:5432 in Dbeaver or typeorm will directly connect to the aurora serverless db
 // Refer to setupEc2Host() function to see comment about the key pair file
 
-export class RdsAuroraStack extends Construct {
+export class RdsAuroraWithTunneling extends Construct {
   constructor(scope: Construct, id: string, props: Props) {
     super(scope, id);
     const { vpc } = props;

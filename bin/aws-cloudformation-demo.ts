@@ -2,11 +2,11 @@
 import * as cdk from '@aws-cdk/core';
 import { Environment } from '@aws-cdk/core';
 import { AwsRegion } from '../lib/constants/aws-region.enum';
-import { AuroraServerlessDatabaseDemo } from '../lib/deployment-units/aurora-serverless-database-demo';
-import { ImportExistedResourcesDemo } from '../lib/deployment-units/import-existed-resources-demo';
-import { MicroServicesWithEcsFargate } from '../lib/deployment-units/microservices-with-ecs';
-import { MicroServicesWithEcsAndAppMesh } from '../lib/deployment-units/microservices-with-ecs-appmesh';
-import { VpcWithEcsClusterStack } from '../lib/stacks/vpc-with-ecs-cluster-stack';
+import { MicroServicesWithEcsFargateStack } from '../lib/microservices/stacks/microservices-with-ecs-stack';
+import { MicroServicesWithEcsAndAppMeshStack } from '../lib/microservices/stacks/microservices-with-ecs-appmesh-stack';
+import { AuroraServerlessDatabaseDemoStack } from '../lib/rds/stacks/aurora-serverless-database-demo-stack';
+import { ImportExistedResourcesDemo } from '../lib/system-manager/import-existed-resources-demo';
+import { VpcWithEcsClusterStack } from '../lib/system-manager/vpc-with-ecs-cluster-stack';
 
 // NOTE: to deploy all and no approval prompt - cdk deploy --require-approval never --all (useful to pipeline)
 
@@ -20,6 +20,6 @@ const env: Environment = {
 // new VpcWithEcsClusterStack(app, 'VpcWithEcsClusterStack', { env });
 // new ImportExistedResourcesDemo(app, 'ImportExistedResourcesDemo', { env });
 
-new MicroServicesWithEcsAndAppMesh(app, 'MicroServicesWithEcsAndAppMesh', { env });
-// new MicroServicesWithEcsFargate(app, 'MicroServicesWithEcsFargate', { env });
-// new AuroraServerlessDatabaseDemo(app, 'AuroraServerlessDatabaseDemo', { env });
+new MicroServicesWithEcsAndAppMeshStack(app, 'MicroServicesWithEcsAndAppMeshStack', { env });
+// new MicroServicesWithEcsFargateStack(app, 'MicroServicesWithEcsFargateStack', { env });
+// new AuroraServerlessDatabaseDemoStack(app, 'AuroraServerlessDatabaseDemoStack', { env });

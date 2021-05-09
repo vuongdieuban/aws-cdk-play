@@ -9,7 +9,7 @@ export class AppVpc extends Construct {
 
     // Default Max Availability zone is 3, default to 1 NAT Gateway per Az
     // NAT gateway is charged even if it is not used - expensive
-    this.vpc = new Vpc(this, 'personal-color-vpc', {
+    this.vpc = new Vpc(this, 'AppVpc', {
       cidr: '10.0.0.0/16',
       maxAzs: 2,
       subnetConfiguration: [

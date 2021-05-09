@@ -1,9 +1,9 @@
 import { App, Stack, StackProps } from '@aws-cdk/core';
-import { AppApiGatewayLambda } from '../stacks/app-apigw-lambda';
-import { AppFargateClusterWithServiceMesh } from '../stacks/app-fargate-cluster-servicemesh';
-import { AppVpc } from '../stacks/vpc-stack';
+import { AppVpc } from '../../shared-resources/app-vpc';
+import { AppApiGatewayLambda } from '../constructs/app-apigw-lambda';
+import { AppFargateClusterWithServiceMesh } from '../constructs/app-fargate-cluster-servicemesh';
 
-export class MicroServicesWithEcsAndAppMesh extends Stack {
+export class MicroServicesWithEcsAndAppMeshStack extends Stack {
   constructor(scope: App, id: string, props: StackProps) {
     super(scope, id, props);
 

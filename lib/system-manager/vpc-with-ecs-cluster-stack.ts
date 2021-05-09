@@ -2,7 +2,7 @@ import { Vpc } from '@aws-cdk/aws-ec2';
 import { Cluster } from '@aws-cdk/aws-ecs';
 import { NamespaceType } from '@aws-cdk/aws-servicediscovery';
 import { Construct, Stack } from '@aws-cdk/core';
-import { AppVpc } from './vpc-stack';
+import { AppVpc } from '../shared-resources/app-vpc';
 
 export class VpcWithEcsClusterStack extends Stack {
   public vpc: Vpc;

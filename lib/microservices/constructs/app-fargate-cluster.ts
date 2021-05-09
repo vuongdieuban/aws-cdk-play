@@ -3,13 +3,13 @@ import { App, CfnOutput, Construct, Stack } from '@aws-cdk/core';
 import { Cluster, ContainerImage, AwsLogDriver, FargateService } from '@aws-cdk/aws-ecs';
 import { NamespaceType } from '@aws-cdk/aws-servicediscovery';
 import { ApplicationLoadBalancer, IApplicationListener } from '@aws-cdk/aws-elasticloadbalancingv2';
-import { EcsFargateService } from '../shared-resources/ecs-fargate-service.construct';
+import { EcsFargateService } from '../../shared-resources/ecs-fargate-service';
 
 interface Props {
   vpc: Vpc;
 }
 
-export class EcsFargateStack extends Construct {
+export class AppFargateCluster extends Construct {
   public applicationListener: IApplicationListener;
   public externalDNS: CfnOutput;
   public httpApiGwEndpointsDNS: CfnOutput;

@@ -4,7 +4,7 @@ import { Cluster, ContainerImage, AwsLogDriver, FargateService, HealthCheck } fr
 import { Mesh, VirtualService } from '@aws-cdk/aws-appmesh';
 import { NamespaceType } from '@aws-cdk/aws-servicediscovery';
 import { ApplicationLoadBalancer, IApplicationListener } from '@aws-cdk/aws-elasticloadbalancingv2';
-import { EcsFargateAppMeshService } from '../shared-resources/ecs-fargate-appmesh-service.construct';
+import { EcsFargateAppMeshService } from '../../shared-resources/ecs-fargate-appmesh-service';
 
 interface Props {
   vpc: Vpc;
