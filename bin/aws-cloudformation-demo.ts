@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 import * as cdk from '@aws-cdk/core';
 import { Environment } from '@aws-cdk/core';
-import { AwsRegion } from '../lib/constants/aws-region.enum';
-import { MicroServicesWithEcsFargateStack } from '../lib/microservices/stacks/microservices-with-ecs-stack';
-import { MicroServicesWithEcsAndAppMeshStack } from '../lib/microservices/stacks/microservices-with-ecs-appmesh-stack';
-import { AuroraServerlessDatabaseDemoStack } from '../lib/rds/stacks/aurora-serverless-database-demo-stack';
-import { SsmCreateParamsStack } from '../lib/system-manager/stacks/ssm-create-params-stack';
-import { SsmImportParamsStack } from '../lib/system-manager/stacks/ssm-import-params-stack';
+import { AwsRegion } from '../infrastructures/constants/aws-region.enum';
+import { MicroServicesWithEcsFargateStack } from '../infrastructures/microservices/stacks/microservices-with-ecs-stack';
+import { MicroServicesWithEcsAndAppMeshStack } from '../infrastructures/microservices/stacks/microservices-with-ecs-appmesh-stack';
+import { AuroraServerlessDatabaseDemoStack } from '../infrastructures/rds/stacks/aurora-serverless-database-demo-stack';
+import { SsmCreateParamsStack } from '../infrastructures/system-manager/stacks/ssm-create-params-stack';
+import { SsmImportParamsStack } from '../infrastructures/system-manager/stacks/ssm-import-params-stack';
 
 // NOTE: to deploy all and no approval prompt - cdk deploy --require-approval never --all (useful to pipeline)
 
