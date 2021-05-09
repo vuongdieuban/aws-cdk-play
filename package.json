@@ -32,10 +32,12 @@
     "@aws-cdk/aws-iam": "1.101.0",
     "@aws-cdk/aws-lambda": "1.101.0",
     "@aws-cdk/aws-rds": "1.101.0",
+    "@aws-cdk/aws-secretsmanager": "^1.101.0",
     "@aws-cdk/aws-servicediscovery": "1.101.0",
     "@aws-cdk/aws-sns": "1.101.0",
     "@aws-cdk/aws-sns-subscriptions": "1.101.0",
     "@aws-cdk/aws-sqs": "1.101.0",
+    "@aws-cdk/aws-ssm": "^1.101.0",
     "@aws-cdk/core": "1.101.0"
   }
 }
