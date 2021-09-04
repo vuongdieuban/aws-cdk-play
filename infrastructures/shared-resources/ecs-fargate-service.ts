@@ -3,6 +3,7 @@ import * as ecs from '@aws-cdk/aws-ecs';
 import * as ec2 from '@aws-cdk/aws-ec2';
 import { DnsRecordType } from '@aws-cdk/aws-servicediscovery';
 import { PolicyStatement } from '@aws-cdk/aws-iam';
+import { DeploymentControllerType } from '@aws-cdk/aws-ecs';
 
 export interface EcsFargateServiceProps {
   cluster: ecs.Cluster;
@@ -10,6 +11,8 @@ export interface EcsFargateServiceProps {
   port: number;
   securityGroup: ec2.SecurityGroup;
   containerOptions: ecs.ContainerDefinitionOptions;
+  debugPort?: number;
+  desiredCount?: number;
 }
 
 export class EcsFargateService extends cdk.Construct {
@@ -27,7 +30,7 @@ export class EcsFargateService extends cdk.Construct {
   }
 
   private createFargateService(serviceProps: EcsFargateServiceProps) {
-    const { cluster, name, securityGroup } = serviceProps;
+    const { cluster, name, securityGroup, desiredCount } = serviceProps;
     const taskDefinition = this.createFargateTaskDef(serviceProps);
 
     return new ecs.FargateService(this, `${name}-service`, {
@@ -36,7 +39,7 @@ export class EcsFargateService extends cdk.Construct {
         subnetType: ec2.SubnetType.PUBLIC, // default is Private
       },
       assignPublicIp: true, // remove if SubnetType is Private
-      desiredCount: 1, // number of task that keep running
+      desiredCount: desiredCount || 1, // number of task that keep running
       taskDefinition,
       securityGroup,
       cloudMapOptions: {
@@ -45,11 +48,16 @@ export class EcsFargateService extends cdk.Construct {
         failureThreshold: 2,
         name,
       },
+      deploymentController: {
+        type: DeploymentControllerType.ECS, // rolling udpate ecs,
+      },
+      maxHealthyPercent: 200,
+      minHealthyPercent: 50,
     });
   }
 
   private createFargateTaskDef(serviceProps: EcsFargateServiceProps): ecs.FargateTaskDefinition {
-    const { name, port, containerOptions } = serviceProps;
+    const { name, port, containerOptions, debugPort } = serviceProps;
 
     const taskDefinition = new ecs.FargateTaskDefinition(this, `${name}-task-definition`);
 
@@ -58,6 +66,13 @@ export class EcsFargateService extends cdk.Construct {
       containerPort: port,
       hostPort: port,
     });
+
+    if (debugPort) {
+      appContainer.addPortMappings({
+        containerPort: debugPort,
+        hostPort: debugPort,
+      });
+    }
 
     taskDefinition.taskRole.addToPrincipalPolicy(
       new PolicyStatement({

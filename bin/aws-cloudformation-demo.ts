@@ -7,6 +7,7 @@ import { MicroServicesWithEcsAndAppMeshStack } from '../infrastructures/microser
 import { AuroraServerlessDatabaseDemoStack } from '../infrastructures/rds/stacks/aurora-serverless-database-demo-stack';
 import { SsmCreateParamsStack } from '../infrastructures/system-manager/stacks/ssm-create-params-stack';
 import { SsmImportParamsStack } from '../infrastructures/system-manager/stacks/ssm-import-params-stack';
+import { EcsRollingReleaseStack } from '../infrastructures/microservices/stacks/ecs-rolling-release-stack';
 
 // NOTE: to deploy all and no approval prompt - cdk deploy --require-approval never --all (useful to pipeline)
 
@@ -30,8 +31,10 @@ const env: Environment = {
 // new SsmImportParamsStack(app, 'SsmImportParamsStack', { env });
 
 //----------------------------------------------------------------------------------------------
-new MicroServicesWithEcsAndAppMeshStack(app, 'MicroServicesWithEcsAndAppMeshStack', { env });
+// new MicroServicesWithEcsAndAppMeshStack(app, 'MicroServicesWithEcsAndAppMeshStack', { env });
 
 // new MicroServicesWithEcsFargateStack(app, 'MicroServicesWithEcsFargateStack', { env });
 
 // new AuroraServerlessDatabaseDemoStack(app, 'AuroraServerlessDatabaseDemoStack', { env });
+
+new EcsRollingReleaseStack(app, 'EcsRollingReleaseStack', { env });

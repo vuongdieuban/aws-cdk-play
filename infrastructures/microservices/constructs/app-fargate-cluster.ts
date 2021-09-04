@@ -1,5 +1,5 @@
 import { InstanceClass, InstanceSize, InstanceType, Peer, Port, SecurityGroup, Vpc } from '@aws-cdk/aws-ec2';
-import { App, CfnOutput, Construct, Stack } from '@aws-cdk/core';
+import { App, CfnOutput, Construct } from '@aws-cdk/core';
 import { Cluster, ContainerImage, AwsLogDriver, FargateService } from '@aws-cdk/aws-ecs';
 import { NamespaceType } from '@aws-cdk/aws-servicediscovery';
 import { ApplicationLoadBalancer, IApplicationListener } from '@aws-cdk/aws-elasticloadbalancingv2';
