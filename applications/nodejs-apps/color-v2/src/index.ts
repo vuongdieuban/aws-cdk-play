@@ -3,7 +3,6 @@ import * as express from 'express';
 const app = express();
 
 const PORT = 3000;
-const HOST = '0.0.0.0';
 
 const generateRandomNumer = (max: number) => {
   return Math.floor(Math.random() * max);
@@ -20,4 +19,4 @@ app.get('/', (req, res) => {
   });
 });
 
-app.listen(PORT, HOST);
+app.listen(PORT);

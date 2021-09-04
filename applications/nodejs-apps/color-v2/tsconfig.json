@@ -17,7 +17,7 @@
     "strict": true,
     // this one allow us to declare variable in class without initialization, 
     // otherwise typescript will force all variable in class to be initialized when declared
-    "strictPropertyInitialization": false 
+    "strictPropertyInitialization": false,
   },
   "exclude": [
     "node_modules",
