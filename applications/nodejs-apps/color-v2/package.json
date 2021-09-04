@@ -7,13 +7,12 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "prebuild": "rm -rf dist",
     "build": "tsc",
-    "dev:debug": "nodemon --inspect=0.0.0.0:9229 src/index.ts"
+    "dev:debug": "node --inspect=0.0.0.0:9229 dist/index.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.1",
-    "nodemon": "^2.0.12",
     "ts-node": "^10.2.1"
   },
   "devDependencies": {
