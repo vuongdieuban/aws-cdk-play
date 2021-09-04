@@ -41,7 +41,7 @@ export class EcsRollingReleaseStack extends Stack {
       securityGroup,
       debugPort: 9229,
       containerOptions: {
-        image: ContainerImage.fromRegistry('banvuong/color-v1:demo'),
+        image: ContainerImage.fromRegistry('banvuong/color-v2:demo'),
         memoryLimitMiB: 128,
         logging: new AwsLogDriver({
           streamPrefix: 'color-v1-log',
