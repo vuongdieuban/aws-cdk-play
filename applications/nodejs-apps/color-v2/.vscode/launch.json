@@ -8,7 +8,7 @@
       "port": 9229,
       "restart": true,
       "protocol": "inspector",
-      "address": "15.223.115.171",
+      "address": "35.183.116.115",
       "remoteRoot": "/usr/src/app",
       "localRoot": "${workspaceFolder}",
     }

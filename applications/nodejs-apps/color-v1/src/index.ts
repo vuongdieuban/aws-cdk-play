@@ -10,6 +10,10 @@ const generateRandomNumer = (max: number) => {
 
 const colors = ['red', 'blue', 'green', 'black'];
 
+app.get('/health', (req, res) => {
+  res.json(true);
+});
+
 app.get('/', (req, res) => {
   const colorIndex = generateRandomNumer(colors.length);
   const chosenColor = colors[colorIndex];

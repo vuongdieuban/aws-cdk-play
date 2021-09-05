@@ -4,6 +4,7 @@ import * as ec2 from '@aws-cdk/aws-ec2';
 import { DnsRecordType } from '@aws-cdk/aws-servicediscovery';
 import { PolicyStatement } from '@aws-cdk/aws-iam';
 import { DeploymentControllerType } from '@aws-cdk/aws-ecs';
+import { ApplicationLoadBalancedFargateService } from '@aws-cdk/aws-ecs-patterns';
 
 export interface EcsFargateServiceProps {
   cluster: ecs.Cluster;
@@ -16,7 +17,7 @@ export interface EcsFargateServiceProps {
 }
 
 export class EcsFargateService extends cdk.Construct {
-  public fargateService: ecs.FargateService;
+  public fargateService: ApplicationLoadBalancedFargateService;
 
   constructor(scope: cdk.Construct, id: string, props: EcsFargateServiceProps) {
     super(scope, id);
@@ -33,27 +34,33 @@ export class EcsFargateService extends cdk.Construct {
     const { cluster, name, securityGroup, desiredCount } = serviceProps;
     const taskDefinition = this.createFargateTaskDef(serviceProps);
 
-    return new ecs.FargateService(this, `${name}-service`, {
+    const app = new ApplicationLoadBalancedFargateService(this, `${name}-service`, {
       cluster,
-      vpcSubnets: {
-        subnetType: ec2.SubnetType.PUBLIC, // default is Private
-      },
+      // vpcSubnets: {
+      //   subnetType: ec2.SubnetType.PUBLIC, // default is Private
+      // },
       assignPublicIp: true, // remove if SubnetType is Private
       desiredCount: desiredCount || 1, // number of task that keep running
       taskDefinition,
-      securityGroup,
-      cloudMapOptions: {
-        dnsRecordType: DnsRecordType.A,
-        dnsTtl: cdk.Duration.seconds(10),
-        failureThreshold: 2,
-        name,
-      },
+      securityGroups: [securityGroup],
+      // cloudMapOptions: {
+      //   dnsRecordType: DnsRecordType.A,
+      //   dnsTtl: cdk.Duration.seconds(10),
+      //   failureThreshold: 2,
+      //   name,
+      // },
       deploymentController: {
         type: DeploymentControllerType.ECS, // rolling udpate ecs,
       },
       maxHealthyPercent: 200,
-      minHealthyPercent: 50,
+      minHealthyPercent: 100,
+      publicLoadBalancer: true,
     });
+
+    const existedHealthCheck = app.targetGroup.healthCheck;
+    app.targetGroup.configureHealthCheck({ ...existedHealthCheck, path: '/health' });
+
+    return app;
   }
 
   private createFargateTaskDef(serviceProps: EcsFargateServiceProps): ecs.FargateTaskDefinition {
